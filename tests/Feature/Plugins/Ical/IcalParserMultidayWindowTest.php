@@ -15,7 +15,7 @@ dataset('multiday-window-cases', [
     ['20260220', '20260303', false],
 
     // 2. Starts after window -> exclude
-    ['20260410', '20260425', false],
+    ['20260425', '20260510', false],
 
     // 3. Ends exactly on window start day -> include
     // ICS spec: all-day and multi-day events use an exclusive DTEND.
@@ -24,31 +24,31 @@ dataset('multiday-window-cases', [
     ['20260220', '20260304', true],
 
     // 4. Ends inside window -> include
-    ['20260220', '20260315', true],
+    ['20260220', '20260330', true],
 
     // 5. Ends exactly on window end day -> include
-    ['20260220', '20260410', true],
+    ['20260220', '20260425', true],
 
     // 6. Ends after window -> include
-    ['20260220', '20260420', true],
+    ['20260220', '20260426', true],
 
     // 7. Starts exactly on window start day, ends inside -> include
-    ['20260303', '20260315', true],
+    ['20260303', '20260330', true],
 
     // 8. Starts exactly on window start day, ends on window end day -> include
-    ['20260303', '20260410', true],
+    ['20260303', '20260425', true],
 
     // 9. Starts exactly on window start day, ends after window -> include
-    ['20260303', '20260420', true],
+    ['20260303', '20260505', true],
 
     // 10. Starts inside window, ends inside -> include
-    ['20260320', '20260325', true],
+    ['20260320', '20260409', true],
 
     // 11. Starts inside window, ends on window end day -> include
-    ['20260320', '20260410', true],
+    ['20260320', '20260425', true],
 
     // 12. Starts inside window, ends after window -> include
-    ['20260320', '20260420', true],
+    ['20260320', '20260505', true],
 ]);
 
 dataset('test-nows', [
