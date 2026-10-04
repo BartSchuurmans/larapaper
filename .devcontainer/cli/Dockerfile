@@ -13,7 +13,8 @@ RUN apk add --no-cache \
   libzip-dev \
   freetype-dev \
   libpng-dev \
-  libjpeg-turbo-dev
+  libjpeg-turbo-dev \
+  icu-dev
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_DOCKER=1
@@ -25,7 +26,7 @@ RUN curl -fsSL https://github.com/Imagick/imagick/archive/refs/tags/3.8.0.tar.gz
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
 # Install PHP extensions
-RUN docker-php-ext-install imagick zip gd
+RUN docker-php-ext-install imagick zip gd intl
 
 # Install postgres pdo driver.
 # RUN apk add --no-cache postgresql-dev && docker-php-ext-install pdo_pgsql
