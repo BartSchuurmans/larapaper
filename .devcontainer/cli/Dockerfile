@@ -27,6 +27,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
 # Install PHP extensions
 RUN docker-php-ext-install imagick zip gd intl
+# The tests need more than the 128M default.
+RUN echo "memory_limit=1G" > "$PHP_INI_DIR/conf.d/memory-limit.ini"
 
 # Install postgres pdo driver.
 # RUN apk add --no-cache postgresql-dev && docker-php-ext-install pdo_pgsql
