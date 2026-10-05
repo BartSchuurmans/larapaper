@@ -5,7 +5,7 @@
     "shutdownAction": "stopCompose",
     "workspaceFolder": "/workspaces/laravel",
     "dockerComposeFile": "docker-compose.yaml",
-    "forwardPorts": [ "nginx:80" ],
+    "forwardPorts": [ "nginx:80", 5173 ],
     "postCreateCommand": "composer install && npm install && npm run build",
     "customizations": {
         "vscode": {

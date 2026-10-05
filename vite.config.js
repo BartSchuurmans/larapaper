@@ -20,6 +20,10 @@ export default defineConfig({
     ]),
     server: {
         cors: true,
+        // Advertise localhost (not [::1]) so the browser reaches Vite through the Dev Container's port forward
+        hmr: {
+            host: 'localhost',
+        },
     },
     build: {
         rollupOptions: {
