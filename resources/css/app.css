@@ -107,4 +107,34 @@ select:focus[data-flux-control] {
         @apply border-zinc-300 dark:border-zinc-700;
         cursor: pointer;
     }
+
+    /* sanitized user-supplied HTML, e.g. catalog author bios */
+    .rich-text {
+        @apply space-y-2;
+    }
+
+    .rich-text a {
+        @apply text-accent underline hover:opacity-80;
+    }
+
+    .rich-text ul {
+        @apply list-disc ps-5;
+    }
+
+    .rich-text ol {
+        @apply list-decimal ps-5;
+    }
+
+    .rich-text blockquote {
+        @apply border-s-2 border-zinc-300 dark:border-zinc-600 ps-3;
+    }
+
+    .rich-text code,
+    .rich-text pre {
+        @apply font-mono;
+    }
+
+    .rich-text pre {
+        @apply whitespace-pre-wrap;
+    }
 }
