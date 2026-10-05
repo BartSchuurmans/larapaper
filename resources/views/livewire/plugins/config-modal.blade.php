@@ -189,9 +189,9 @@ new class extends Component
                             $fieldKey = $field['keyname'] ?? $field['key'] ?? $field['name'];
                             $rawValue = $configuration[$fieldKey] ?? ($field['default'] ?? '');
 
-                            // These are sanitized at Model/Plugin level, safe to render HTML
-                            $safeDescription = $field['description'] ?? '';
-                            $safeHelp = $field['help_text'] ?? '';
+                            // May contain HTML; rendered through <x-rich-text>, which sanitizes it
+                            $description = $field['description'] ?? '';
+                            $helpText = $field['help_text'] ?? '';
 
                             // For code fields, if the value is an array, JSON encode it
                             if ($field['field_type'] === 'code' && is_array($rawValue)) {
@@ -212,29 +212,29 @@ new class extends Component
                             @if ($field['field_type'] === 'string' || $field['field_type'] === 'url')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'text')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:textarea
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'code')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:textarea
                                         rows="{{ $field['rows'] ?? 3 }}"
                                         placeholder="{{ $field['placeholder'] ?? null }}"
@@ -242,34 +242,34 @@ new class extends Component
                                         value="{{ $currentValue }}"
                                         class="font-mono"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'password')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input
                                         type="password"
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
                                         viewable
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'copyable')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input value="{{ $field['value'] }}" copyable />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'time_zone')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:select
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ Arr::get($field, 'value') }}"
@@ -284,61 +284,61 @@ new class extends Component
                                             </option>
                                         @endforeach
                                     </flux:select>
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'number')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input
                                         type="number"
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'boolean')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:checkbox
                                         wire:model="configuration.{{ $fieldKey }}"
                                         :checked="$currentValue"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'date')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input
                                         type="date"
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'time')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input
                                         type="time"
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'select')
                                 @if (isset($field['multiple']) && $field['multiple'] === true)
                                     <flux:field>
                                         <flux:label>{{ $field['name'] }}</flux:label>
-                                        <flux:description>{!! $safeDescription !!}</flux:description>
+                                        <flux:description><x-rich-text :html="$description" /></flux:description>
                                         <flux:checkbox.group wire:model="configuration.{{ $fieldKey }}">
                                             @if (isset($field['options']) && is_array($field['options']))
                                                 @foreach ($field['options'] as $option)
@@ -355,12 +355,12 @@ new class extends Component
                                                 @endforeach
                                             @endif
                                         </flux:checkbox.group>
-                                        <flux:description>{!! $safeHelp !!}</flux:description>
+                                        <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                     </flux:field>
                                 @else
                                     <flux:field>
                                         <flux:label>{{ $field['name'] }}</flux:label>
-                                        <flux:description>{!! $safeDescription !!}</flux:description>
+                                        <flux:description><x-rich-text :html="$description" /></flux:description>
                                         <flux:select wire:model="configuration.{{ $fieldKey }}">
                                             <option value="">Select {{ $field['name'] }}...</option>
                                             @if (isset($field['options']) && is_array($field['options']))
@@ -388,14 +388,14 @@ new class extends Component
                                                 @endforeach
                                             @endif
                                         </flux:select>
-                                        <flux:description>{!! $safeHelp !!}</flux:description>
+                                        <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                     </flux:field>
                                 @endif
 
                             @elseif ($field['field_type'] === 'xhrSelect')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:select
                                         wire:model="configuration.{{ $fieldKey }}"
                                         wire:init="loadXhrSelectOptions('{{ $fieldKey }}', '{{ $field['endpoint'] }}')"
@@ -434,13 +434,13 @@ new class extends Component
                                             @endforeach
                                         @endif
                                     </flux:select>
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
 
                             @elseif ($field['field_type'] === 'xhrSelectSearch')
                                 <div class="space-y-2">
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input.group>
                                         <flux:input
                                             wire:model="searchQueries.{{ $fieldKey }}"
@@ -451,7 +451,7 @@ new class extends Component
                                             icon="magnifying-glass"
                                         />
                                     </flux:input.group>
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                     @if ((isset($xhrSelectOptions[$fieldKey]) && is_array($xhrSelectOptions[$fieldKey]) && count($xhrSelectOptions[$fieldKey]) > 0) || ! empty($currentValue))
                                         <flux:select wire:model="configuration.{{ $fieldKey }}">
                                             <option value="">Select {{ $field['name'] }}...</option>
@@ -499,7 +499,7 @@ new class extends Component
                             @elseif ($field['field_type'] === 'multi_string')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
 
                                     <div class="mt-2 space-y-2">
                                         @foreach ($multiValues[$fieldKey] as $index => $item)
@@ -541,12 +541,12 @@ new class extends Component
                                             Add Item
                                         </flux:button>
                                     </div>
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
                             @elseif ($field['field_type'] === 'lat_lon')
                                 <flux:field>
                                     <flux:label>{{ $field['name'] }}</flux:label>
-                                    <flux:description>{!! $safeDescription !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$description" /></flux:description>
                                     <flux:input
                                         wire:model="configuration.{{ $fieldKey }}"
                                         value="{{ $currentValue }}"
@@ -554,7 +554,7 @@ new class extends Component
                                         pattern="-?\d+(\.\d+)?,-?\d+(\.\d+)?"
                                         title="Latitude,longitude (e.g. 40.7128,-74.0060)"
                                     />
-                                    <flux:description>{!! $safeHelp !!}</flux:description>
+                                    <flux:description><x-rich-text :html="$helpText" /></flux:description>
                                 </flux:field>
                             @else
                                 <flux:callout variant="warning">Field type "{{ $field['field_type'] }}" not yet supported</flux:callout>

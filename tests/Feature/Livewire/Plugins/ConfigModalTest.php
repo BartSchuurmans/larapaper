@@ -197,3 +197,29 @@ test('config modal saves lat_lon field values correctly', function (): void {
 
     expect($plugin->fresh()->configuration['location'])->toBe('48.2083537,16.3725042');
 });
+
+test('config modal renders field description and help text as rich text', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $plugin = Plugin::create([
+        'uuid' => Str::uuid(),
+        'user_id' => $user->id,
+        'name' => 'Test Plugin',
+        'data_strategy' => 'static',
+        'configuration_template' => [
+            'custom_fields' => [[
+                'keyname' => 'city',
+                'field_type' => 'string',
+                'name' => 'City',
+                'description' => 'Your <strong>home</strong> city',
+                'help_text' => 'See <a href="https://example.com">the docs</a>',
+            ]],
+        ],
+        'configuration' => [],
+    ]);
+
+    Livewire::test('plugins.config-modal', ['plugin' => $plugin])
+        ->assertSeeHtml('Your <strong>home</strong> city')
+        ->assertSeeHtml('See <a href="https://example.com" target="_blank" rel="noreferrer noopener">the docs</a>');
+});
