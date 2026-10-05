@@ -161,7 +161,7 @@ it('can preview a plugin', function (): void {
             'name' => 'Test Plugin',
             'author' => ['name' => 'Test Author', 'github' => 'testuser'],
             'author_bio' => [
-                'description' => 'A test plugin description',
+                'description' => '<p onclick="alert(1)">A <em>test</em> plugin description</p>',
             ],
             'license' => 'MIT',
             'trmnlp' => [
@@ -191,5 +191,5 @@ it('can preview a plugin', function (): void {
         ->assertSet('previewingPlugin', 'test-plugin')
         ->assertSet('previewData.name', 'Test Plugin')
         ->assertSee('Preview Test Plugin')
-        ->assertSee('A test plugin description');
+        ->assertSeeHtml('<p>A <em>test</em> plugin description</p>');
 });

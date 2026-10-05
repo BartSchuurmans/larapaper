@@ -244,9 +244,7 @@ class extends Component
             'name' => $item['name'] ?? 'Untitled',
             'icon_url' => $item['icon_url'] ?? null,
             'screenshot_url' => $item['screenshot_url'] ?? null,
-            'author_bio' => is_array($item['author_bio'] ?? null)
-                ? strip_tags($item['author_bio']['description'] ?? null)
-                : null,
+            'author_bio' => data_get($item, 'author_bio.description'),
             'stats' => [
                 'installs' => data_get($item, 'stats.installs'),
                 'forks' => data_get($item, 'stats.forks'),
@@ -309,7 +307,7 @@ class extends Component
                             </div>
 
                             @if($recipe['author_bio'])
-                                <flux:text class="mt-2" size="sm">{{ $recipe['author_bio'] }}</flux:text>
+                                <x-rich-text class="mt-2 text-xs text-zinc-500 dark:text-white/70" :html="$recipe['author_bio']" />
                             @endif
 
                             <div class="mt-4 flex items-center space-x-3">
@@ -375,7 +373,7 @@ class extends Component
                         <div class="rounded-xl dark:bg-white/10 border border-zinc-200 dark:border-white/10 shadow-xs">
                             <div class="px-10 py-8">
                                 <flux:heading size="sm" class="mb-2">Description</flux:heading>
-                                <flux:text size="sm">{{ $previewData['author_bio'] }}</flux:text>
+                                <x-rich-text class="text-xs text-zinc-500 dark:text-white/70" :html="$previewData['author_bio']" />
                             </div>
                         </div>
                     @endif

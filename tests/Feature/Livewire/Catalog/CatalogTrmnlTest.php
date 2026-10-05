@@ -31,6 +31,28 @@ it('loads newest TRMNL recipes on mount', function (): void {
         ->assertSee('Installs: 10');
 });
 
+it('sanitizes author_bio', function (): void {
+    Http::fake([
+        config('services.trmnl.base_url').'/recipes.json*' => Http::response([
+            'data' => [
+                [
+                    'id' => 123,
+                    'name' => 'Weather Chum',
+                    'icon_url' => 'https://example.com/icon.png',
+                    'screenshot_url' => null,
+                    'author_bio' => ['description' => '<a href="http://example.com" target="_blank" style="font-size: 1000px;">Visit my <strong>site</strong></a>'],
+                    'stats' => ['installs' => 10, 'forks' => 2],
+                ],
+            ],
+        ], 200),
+    ]);
+
+    Livewire::withoutLazyLoading();
+
+    Livewire::test('catalog.trmnl')
+        ->assertSeeHtml('<a href="http://example.com" target="_blank" rel="noreferrer noopener">Visit my <strong>site</strong></a>');
+});
+
 it('shows preview button when screenshot_url is provided', function (): void {
     Http::fake([
         config('services.trmnl.base_url').'/recipes.json*' => Http::response([

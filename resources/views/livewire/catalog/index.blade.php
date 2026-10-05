@@ -190,7 +190,7 @@ class extends Component
                             </div>
 
                             @if($plugin['description'])
-                                <flux:text class="mt-2" size="sm">{{ $plugin['description'] }}</flux:text>
+                                <x-rich-text class="mt-2 text-xs text-zinc-500 dark:text-white/70" :html="$plugin['description']" />
                             @endif
 
                             <div class="mt-4 flex items-center space-x-3">
@@ -246,7 +246,7 @@ class extends Component
                 @if($previewData['description'])
                     <div class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
                         <flux:heading size="sm" class="mb-2">Description</flux:heading>
-                        <flux:text size="sm">{{ $previewData['description'] }}</flux:text>
+                        <x-rich-text class="text-xs text-zinc-500 dark:text-white/70" :html="$previewData['description']" />
                     </div>
                 @endif
 
