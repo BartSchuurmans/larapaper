@@ -25,15 +25,7 @@ class IcalResponseParser implements ResponseParser
         }
 
         try {
-            // Workaround for om/icalparser v4.0.0 bug where it fails if ORGANIZER or ATTENDEE has no parameters.
-            // When ORGANIZER or ATTENDEE has no parameters (no semicolon after the key),
-            // IcalParser::parseRow returns an empty string for $middle instead of an array,
-            // which causes a type error in a foreach loop in IcalParser::parseString.
-            $normalizedBody = preg_replace('/^(ORGANIZER|ATTENDEE):/m', '$1;CN=Unknown:', $body);
-            // om\IcalParser::parseString() clears data/counters but not $timezone (X-WR-TIMEZONE / TZID).
-            // Reset so a reused parser instance cannot apply the previous feed's zone to floating DTSTART values.
-            $this->parser->timezone = null;
-            $this->parser->parseString($normalizedBody);
+            $this->parser->parseString($body);
 
             $events = $this->parser->getEvents()->sorted()->getArrayCopy();
             $windowStart = now()->subDays(7);

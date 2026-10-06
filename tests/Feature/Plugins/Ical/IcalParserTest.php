@@ -230,7 +230,7 @@ ICS;
 
     Carbon::setTestNow();
 });
-test('om IcalParser retains X-WR-TIMEZONE across parseString so a reused instance shifts floating wall times', function (): void {
+test('om IcalParser resets X-WR-TIMEZONE between parseString calls so a reused instance does not shift floating wall times', function (): void {
     $calendarBerlin = <<<'ICS'
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -267,14 +267,16 @@ ICS;
 
     $parser->parseString($calendarFloatingOnly);
 
+    expect($parser->timezone)->toBeNull();
+
     $event = $parser->getEvents()->sorted()->getArrayCopy()[0];
 
     expect($event['SUMMARY'])->toBe('Floating wall clock');
 
     $startUtcHour = Carbon::instance($event['DTSTART'])->utc()->format('H:i');
 
-    // 12:25 wall clock in inherited Europe/Berlin (CEST) → 10:25 UTC (see om/icalparser: parseString clears data but not $timezone).
-    expect($startUtcHour)->toBe('10:25');
+    // Floating 12:25 stays 12:25 UTC: parseString resets $timezone unless the calendar is appended.
+    expect($startUtcHour)->toBe('12:25');
 });
 
 test('IcalResponseParser resets internal parser timezone between parses so floating times are not shifted', function (): void {
