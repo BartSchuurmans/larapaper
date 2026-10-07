@@ -17,6 +17,7 @@
         "@codemirror/language": "^6.11.3",
         "@codemirror/search": "^6.5.11",
         "@codemirror/state": "^6.5.2",
+        "@codemirror/streamparser": "^6.0.0",
         "@codemirror/theme-one-dark": "^6.1.2",
         "@codemirror/view": "^6.38.5",
         "@fsegurai/codemirror-theme-github-light": "^6.2.2",
