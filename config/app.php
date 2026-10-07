@@ -156,6 +156,10 @@ return [
 
     'http_client_timeout' => (int) env('HTTP_CLIENT_TIMEOUT', 10),
 
+    // Render polling recipes in the background before their data goes stale, instead of
+    // inside the device's display request
+    'prerender_screens' => (bool) env('PRERENDER_SCREENS', false),
+
     'force_https' => env('FORCE_HTTPS', false),
     'puppeteer_docker' => env('PUPPETEER_DOCKER', false),
     'puppeteer_mode' => env('PUPPETEER_MODE', 'local'),
