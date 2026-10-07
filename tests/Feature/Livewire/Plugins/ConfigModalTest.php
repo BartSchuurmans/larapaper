@@ -251,7 +251,7 @@ test('recipe page renders purified author bio html', function (): void {
                 'keyname' => 'author_bio',
                 'field_type' => 'author_bio',
                 'name' => 'Author',
-                'description' => '<strong>Hello</strong> <script>alert(1)</script>',
+                'description' => '<strong>Hello</strong> <a href="https://docs.example.com">Docs</a> <script>alert(1)</script>',
                 'github_url' => 'https://github.com/octocat',
                 'learn_more_url' => 'https://example.com',
                 'email_address' => 'author@example.com',
@@ -261,6 +261,7 @@ test('recipe page renders purified author bio html', function (): void {
 
     Livewire::test('plugins.recipe', ['plugin' => $plugin])
         ->assertSee('<strong>Hello</strong>', false)
+        ->assertSee('href="https://docs.example.com" target="_blank" rel="noreferrer noopener"', false)
         ->assertDontSee('<script>alert(1)</script>', false)
         ->assertSee('octocat')
         ->assertSee('href="https://github.com/octocat"', false)
@@ -270,9 +271,10 @@ test('recipe page renders purified author bio html', function (): void {
                 'keyname' => 'author_bio',
                 'field_type' => 'author_bio',
                 'name' => 'Author',
-                'description' => '<em>Edited</em> <script>alert(1)</script>',
+                'description' => '<em>Edited</em> <a href="https://docs.example.com">Docs</a> <script>alert(1)</script>',
             ]],
         ])
         ->assertSee('<em>Edited</em>', false)
+        ->assertSee('href="https://docs.example.com" target="_blank" rel="noreferrer noopener"', false)
         ->assertDontSee('<script>alert(1)</script>', false);
 });
