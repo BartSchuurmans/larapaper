@@ -5,6 +5,7 @@ use App\Jobs\FetchDeviceModelsJob;
 use App\Jobs\FetchProxyCloudResponses;
 use App\Jobs\FirmwarePollJob;
 use App\Jobs\NotifyDeviceBatteryLowJob;
+use App\Jobs\PrerenderPluginScreensJob;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::job(FetchProxyCloudResponses::class, [])->cron(
@@ -16,3 +17,5 @@ Schedule::job(FirmwarePollJob::class)->daily();
 Schedule::job(CleanupDeviceLogsJob::class)->daily();
 Schedule::job(FetchDeviceModelsJob::class)->weekly();
 Schedule::job(NotifyDeviceBatteryLowJob::class)->dailyAt('10:00');
+Schedule::job(PrerenderPluginScreensJob::class)->everyMinute()
+    ->when(fn (): bool => (bool) config('app.prerender_screens'));

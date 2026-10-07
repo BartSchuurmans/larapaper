@@ -127,6 +127,7 @@ php artisan db:seed --class=ExampleRecipesSeeder
 | `PHP_OPCACHE_ENABLE`          | Enable PHP Opcache                                                                                                                          | 0                 |
 | `TRMNL_IMAGE_URL_TIMEOUT`     | How long TRMNL waits for a response on the display endpoint. (sec)                                                                          | 30                |
 | `HTTP_CLIENT_TIMEOUT`         | Outbound HTTP timeout when fetching recipe polling URLs. (sec)                                                                              | 10                |
+| `PRERENDER_SCREENS`           | Render polling recipes in the background before their data goes stale, so devices don't wait for the render.                                | 0                 |
 | `APP_TIMEZONE`                | Default timezone, which will be used by the PHP date functions. UTC is recommended.                                                         | UTC               |
 
 #### Login

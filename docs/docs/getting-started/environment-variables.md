@@ -17,4 +17,5 @@ description: LaraPaper environment configuration reference.
 | `PHP_OPCACHE_ENABLE` | Enable PHP OPcache | `0` |
 | `TRMNL_IMAGE_URL_TIMEOUT` | Display endpoint response timeout (seconds) | `30` |
 | `HTTP_CLIENT_TIMEOUT` | Outbound HTTP timeout when fetching recipe polling URLs (seconds) | `10` |
+| `PRERENDER_SCREENS` | Render polling recipes in the background before their data goes stale, so devices don't wait for the render | `0` |
 | `APP_TIMEZONE` | PHP timezone (UTC recommended) | `UTC` |
