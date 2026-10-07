@@ -65,6 +65,7 @@ it('loads plugins from catalog URL', function (): void {
     $component->assertSee('A test plugin');
     $component->assertSee('MIT');
     $component->assertSee('Preview');
+    $component->assertSee('Learn More');
 });
 
 it('hides preview button when screenshot_url is missing', function (): void {
@@ -192,4 +193,41 @@ it('can preview a plugin', function (): void {
         ->assertSet('previewData.name', 'Test Plugin')
         ->assertSee('Preview Test Plugin')
         ->assertSee('A test plugin description');
+});
+
+it('purifies catalog author bio html', function (): void {
+    Cache::forget('catalog_plugins');
+
+    $catalogData = [
+        'test-plugin' => [
+            'name' => 'Test Plugin',
+            'author' => ['name' => 'Test Author', 'github' => 'testuser'],
+            'author_bio' => [
+                'description' => '<strong>Hello</strong> <script>alert(1)</script>',
+            ],
+            'license' => 'MIT',
+            'trmnlp' => [
+                'zip_url' => 'https://example.com/plugin.zip',
+            ],
+            'byos' => [
+                'byos_laravel' => [
+                    'compatibility' => true,
+                ],
+            ],
+            'screenshot_url' => 'https://example.com/screenshot.png',
+        ],
+    ];
+
+    Http::fake([
+        config('app.catalog_url') => Http::response(Yaml::dump($catalogData), 200),
+    ]);
+
+    Livewire::withoutLazyLoading();
+
+    Livewire::test('catalog.index')
+        ->assertSet('catalogPlugins.test-plugin.description', '<strong>Hello</strong> ')
+        ->assertSee('<strong>Hello</strong>', false)
+        ->assertDontSee('<script>alert(1)</script>', false)
+        ->call('previewPlugin', 'test-plugin')
+        ->assertSee('<strong>Hello</strong>', false);
 });

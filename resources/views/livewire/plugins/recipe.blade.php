@@ -1152,7 +1152,7 @@ HTML;
                     @if ($authorField)
                         <div class="mb-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                             <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                {{ $authorField['description'] }}
+                                {!! \Stevebauman\Purify\Facades\Purify::clean($authorField['description']) !!}
                             </div>
 
                             @if (isset($authorField['github_url']) || isset($authorField['learn_more_url']) || isset($authorField['email_address']))

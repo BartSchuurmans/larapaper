@@ -669,6 +669,37 @@ it('imports plugin with only shared.blade.php file', function (): void {
         ->and($plugin->render_markup)->toBeNull();
 });
 
+it('purifies author bio html when importing a recipe', function (): void {
+    $user = User::factory()->create();
+
+    $settingsYaml = <<<'YAML'
+name: Test Plugin
+refresh_interval: 30
+strategy: static
+polling_verb: get
+static_data: '{}'
+custom_fields:
+  - keyname: author_bio
+    field_type: author_bio
+    name: Author
+    description: '<strong>Hello</strong> <script>alert(1)</script>'
+YAML;
+
+    $zipContent = createMockZipFile([
+        'src/settings.yml' => $settingsYaml,
+        'src/full.liquid' => getValidFullLiquid(),
+    ]);
+
+    $zipFile = UploadedFile::fake()->createWithContent('test-plugin.zip', $zipContent);
+
+    $plugin = (new PluginImportService())->importFromZip($zipFile, $user);
+
+    $description = $plugin->fresh()->configuration_template['custom_fields'][0]['description'];
+
+    expect($description)->toBe('<strong>Hello</strong> ')
+        ->and($description)->not->toContain('<script>');
+});
+
 // Helper methods
 function createMockZipFile(array $files): string
 {

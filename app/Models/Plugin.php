@@ -34,6 +34,7 @@ use InvalidArgumentException;
 use Keepsuit\LaravelLiquid\LaravelLiquidExtension;
 use Keepsuit\Liquid\Exceptions\LiquidException;
 use Keepsuit\Liquid\Extensions\StandardExtension;
+use Stevebauman\Purify\Facades\Purify;
 use Symfony\Component\Yaml\Yaml;
 
 class Plugin extends Model
@@ -206,12 +207,13 @@ class Plugin extends Model
         if (isset($template['custom_fields']) && is_array($template['custom_fields'])) {
             foreach ($template['custom_fields'] as &$field) {
                 if (isset($field['description'])) {
-                    $field['description'] = \Stevebauman\Purify\Facades\Purify::clean($field['description']);
+                    $field['description'] = Purify::clean($field['description']);
                 }
                 if (isset($field['help_text'])) {
-                    $field['help_text'] = \Stevebauman\Purify\Facades\Purify::clean($field['help_text']);
+                    $field['help_text'] = Purify::clean($field['help_text']);
                 }
             }
+            unset($field);
 
             $this->configuration_template = $template;
         }

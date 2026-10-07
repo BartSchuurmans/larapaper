@@ -283,3 +283,45 @@ it('resets pagination when search term changes', function (): void {
         ->assertDontSee('Initial 1')
         ->assertSet('page', 1);
 });
+
+it('purifies author bio html in the recipe list and preview', function (): void {
+    Http::fake([
+        config('services.trmnl.base_url').'/recipes.json*' => Http::response([
+            'data' => [
+                [
+                    'id' => 123,
+                    'name' => 'Weather Chum',
+                    'icon_url' => null,
+                    'screenshot_url' => 'https://example.com/shot.png',
+                    'author_bio' => [
+                        'description' => '<strong>Listed</strong> <script>alert(1)</script>',
+                    ],
+                    'stats' => ['installs' => 1, 'forks' => 0],
+                ],
+            ],
+        ], 200),
+        config('services.trmnl.base_url').'/recipes/123.json' => Http::response([
+            'data' => [
+                'id' => 123,
+                'name' => 'Weather Chum',
+                'icon_url' => null,
+                'screenshot_url' => 'https://example.com/shot.png',
+                'author_bio' => [
+                    'description' => '<em>Preview</em> <script>alert(2)</script>',
+                ],
+                'stats' => ['installs' => 1, 'forks' => 0],
+            ],
+        ], 200),
+    ]);
+
+    Livewire::withoutLazyLoading();
+
+    Livewire::test('catalog.trmnl')
+        ->assertSet('recipes.0.author_bio', '<strong>Listed</strong> ')
+        ->assertSee('<strong>Listed</strong>', false)
+        ->assertDontSee('<script>alert(1)</script>', false)
+        ->call('previewRecipe', '123')
+        ->assertSet('previewData.author_bio', '<em>Preview</em> ')
+        ->assertSee('<em>Preview</em>', false)
+        ->assertDontSee('<script>alert(2)</script>', false);
+});

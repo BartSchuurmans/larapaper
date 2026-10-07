@@ -189,9 +189,8 @@ new class extends Component
                             $fieldKey = $field['keyname'] ?? $field['key'] ?? $field['name'];
                             $rawValue = $configuration[$fieldKey] ?? ($field['default'] ?? '');
 
-                            // These are sanitized at Model/Plugin level, safe to render HTML
-                            $safeDescription = $field['description'] ?? '';
-                            $safeHelp = $field['help_text'] ?? '';
+                            $safeDescription = \Stevebauman\Purify\Facades\Purify::clean($field['description'] ?? null);
+                            $safeHelp = \Stevebauman\Purify\Facades\Purify::clean($field['help_text'] ?? null);
 
                             // For code fields, if the value is an array, JSON encode it
                             if ($field['field_type'] === 'code' && is_array($rawValue)) {

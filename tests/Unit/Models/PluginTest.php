@@ -863,6 +863,35 @@ test('plugin model sanitizes template fields on save', function (string $input, 
         ->and($field['description'])->not->toContain($forbidden);
 })->with('xss_vectors');
 
+test('plugin model purifies author bio html and leaves non-string help text unchanged', function (): void {
+    $user = User::factory()->create();
+
+    $plugin = Plugin::create([
+        'user_id' => $user->id,
+        'name' => 'Author Bio',
+        'data_stale_minutes' => 15,
+        'data_strategy' => 'static',
+        'polling_verb' => 'get',
+        'configuration_template' => [
+            'custom_fields' => [
+                [
+                    'keyname' => 'author_bio',
+                    'field_type' => 'author_bio',
+                    'name' => 'Author',
+                    'description' => '<strong>Hello</strong> <script>alert(1)</script>',
+                    'help_text' => ['not', 'a', 'string'],
+                ],
+            ],
+        ],
+    ]);
+
+    $field = $plugin->fresh()->configuration_template['custom_fields'][0];
+
+    expect($field['description'])->toBe('<strong>Hello</strong> ')
+        ->and($field['description'])->not->toContain('<script>')
+        ->and($field['help_text'])->toBe(['not', 'a', 'string']);
+});
+
 test('plugin model preserves multi_string csv format', function (): void {
     $user = User::factory()->create();
 

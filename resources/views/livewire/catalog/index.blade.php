@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Lazy;
 use Livewire\Component;
+use Stevebauman\Purify\Facades\Purify;
 use Symfony\Component\Yaml\Yaml;
 
 new
@@ -71,7 +72,7 @@ class extends Component
                         return [
                             'id' => $key,
                             'name' => Arr::get($plugin, 'name', 'Unknown Plugin'),
-                            'description' => Arr::get($plugin, 'author_bio.description', ''),
+                            'description' => Purify::clean(Arr::get($plugin, 'author_bio.description')),
                             'author' => Arr::get($plugin, 'author.name', 'Unknown Author'),
                             'github' => Arr::get($plugin, 'author.github'),
                             'license' => Arr::get($plugin, 'license'),
@@ -190,7 +191,7 @@ class extends Component
                             </div>
 
                             @if($plugin['description'])
-                                <flux:text class="mt-2" size="sm">{{ $plugin['description'] }}</flux:text>
+                                <flux:text class="mt-2" size="sm">{!! \Stevebauman\Purify\Facades\Purify::clean($plugin['description']) !!}</flux:text>
                             @endif
 
                             <div class="mt-4 flex items-center space-x-3">
@@ -246,7 +247,7 @@ class extends Component
                 @if($previewData['description'])
                     <div class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
                         <flux:heading size="sm" class="mb-2">Description</flux:heading>
-                        <flux:text size="sm">{{ $previewData['description'] }}</flux:text>
+                        <flux:text size="sm">{!! \Stevebauman\Purify\Facades\Purify::clean($previewData['description']) !!}</flux:text>
                     </div>
                 @endif
 

@@ -197,3 +197,82 @@ test('config modal saves lat_lon field values correctly', function (): void {
 
     expect($plugin->fresh()->configuration['location'])->toBe('48.2083537,16.3725042');
 });
+
+test('config modal renders purified html in field description and help text', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $plugin = Plugin::create([
+        'uuid' => Str::uuid(),
+        'user_id' => $user->id,
+        'name' => 'Test Plugin',
+        'data_strategy' => 'static',
+        'configuration_template' => [
+            'custom_fields' => [[
+                'keyname' => 'title',
+                'field_type' => 'string',
+                'name' => 'Title',
+                'description' => '<strong>Hello</strong> <script>alert(1)</script>',
+                'help_text' => '<em>Help</em> <script>alert(2)</script>',
+            ]],
+        ],
+    ]);
+
+    Livewire::test('plugins.config-modal', ['plugin' => $plugin])
+        ->assertSee('<strong>Hello</strong>', false)
+        ->assertSee('<em>Help</em>', false)
+        ->assertDontSee('<script>alert(1)</script>', false)
+        ->assertDontSee('<script>alert(2)</script>', false)
+        ->set('configuration_template', [
+            'custom_fields' => [[
+                'keyname' => 'title',
+                'field_type' => 'string',
+                'name' => 'Title',
+                'description' => '<strong>Edited</strong> <script>alert(3)</script>',
+                'help_text' => '<em>Edited help</em> <script>alert(4)</script>',
+            ]],
+        ])
+        ->assertSee('<strong>Edited</strong>', false)
+        ->assertSee('<em>Edited help</em>', false)
+        ->assertDontSee('<script>alert(3)</script>', false)
+        ->assertDontSee('<script>alert(4)</script>', false);
+});
+
+test('recipe page renders purified author bio html', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $plugin = Plugin::factory()->create([
+        'user_id' => $user->id,
+        'plugin_type' => 'recipe',
+        'data_strategy' => 'static',
+        'configuration_template' => [
+            'custom_fields' => [[
+                'keyname' => 'author_bio',
+                'field_type' => 'author_bio',
+                'name' => 'Author',
+                'description' => '<strong>Hello</strong> <script>alert(1)</script>',
+                'github_url' => 'https://github.com/octocat',
+                'learn_more_url' => 'https://example.com',
+                'email_address' => 'author@example.com',
+            ]],
+        ],
+    ]);
+
+    Livewire::test('plugins.recipe', ['plugin' => $plugin])
+        ->assertSee('<strong>Hello</strong>', false)
+        ->assertDontSee('<script>alert(1)</script>', false)
+        ->assertSee('octocat')
+        ->assertSee('href="https://github.com/octocat"', false)
+        ->assertSee('mailto:author@example.com', false)
+        ->set('configuration_template', [
+            'custom_fields' => [[
+                'keyname' => 'author_bio',
+                'field_type' => 'author_bio',
+                'name' => 'Author',
+                'description' => '<em>Edited</em> <script>alert(1)</script>',
+            ]],
+        ])
+        ->assertSee('<em>Edited</em>', false)
+        ->assertDontSee('<script>alert(1)</script>', false);
+});
