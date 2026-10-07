@@ -185,10 +185,12 @@ new class extends Component
     <div class="py-12">
         {{--@dump($devices)--}}
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="mb-6 flex items-center justify-between">
-                <livewire:device-resource-nav />
-                <flux:modal.trigger name="create-device">
-                    <flux:button icon="plus" variant="primary">Add Device</flux:button>
+            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="w-full min-w-0 sm:flex-1">
+                    <livewire:device-resource-nav />
+                </div>
+                <flux:modal.trigger name="create-device" class="shrink-0">
+                    <flux:button icon="plus" variant="primary" class="w-full sm:w-auto">Add Device</flux:button>
                 </flux:modal.trigger>
             </div>
             <flux:modal name="create-device" class="md:w-96">
@@ -350,19 +352,19 @@ new class extends Component
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Name</div>
                         </th>
                         <th
-                            class="px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 dark:text-white"
+                            class="hidden px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 md:table-cell dark:text-white"
                             data-flux-column=""
                         >
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Friendly ID</div>
                         </th>
                         <th
-                            class="px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 dark:text-white"
+                            class="hidden px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 md:table-cell dark:text-white"
                             data-flux-column=""
                         >
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Mac Address</div>
                         </th>
                         <th
-                            class="px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 dark:text-white"
+                            class="hidden px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 md:table-cell dark:text-white"
                             data-flux-column=""
                         >
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Refresh</div>
@@ -386,10 +388,10 @@ new class extends Component
                                     class="font-medium hover:underline dark:text-zinc-200"
                                 >{{ $device->name }}</a>
                             </td>
-                            <td class="px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 dark:text-zinc-300">
+                            <td class="hidden px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 md:table-cell dark:text-zinc-300">
                                 {{ $device->friendly_id }}
                             </td>
-                            <td class="px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 dark:text-zinc-300">
+                            <td class="hidden px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 md:table-cell dark:text-zinc-300">
                                 <div
                                     type="button"
                                     data-flux-badge="data-flux-badge"
@@ -398,7 +400,7 @@ new class extends Component
                                     {{ $device->mac_address }}
                                 </div>
                             </td>
-                            <td class="px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 dark:text-zinc-300">
+                            <td class="hidden px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 md:table-cell dark:text-zinc-300">
                                 {{ $device->default_refresh_interval }}
                             </td>
                             <td class="px-3 py-3 text-sm font-medium whitespace-nowrap text-zinc-800 first:pl-0 last:pr-0 dark:text-white">
@@ -442,5 +444,90 @@ new class extends Component
                             </td>
                         </tr>
                     @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                    <!--[if [endif]-->
+    @foreach ($devices as $device)
+        <flux:modal name="pause-device-{{ $device->id }}">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Pause</flux:heading>
+                    <div class="mt-2 text-sm text-zinc-500">
+                        Select how long to pause screen generation for
+                        <span class="font-semibold">{{ $device->name }}</span>.
+                    </div>
+                </div>
+                <form wire:submit="pauseDevice({{ $device->id }})">
+                    <div class="mb-4">
+                        <flux:radio.group wire:model.live="pause_duration" label="Pause Duration" variant="segmented">
+                            <flux:radio value="30" label="30 min" />
+                            <flux:radio value="60" label="60 min" />
+                            <flux:radio value="120" label="120 min" />
+                            <flux:radio value="240" label="240 min" />
+                            <flux:radio value="480" label="480 min" />
+                        </flux:radio.group>
+                    </div>
+
+                    <flux:separator text="or" class="my-4" />
+
+                    <div class="mb-4 grid grid-cols-2 gap-4">
+                        <flux:input
+                            type="date"
+                            label="Date"
+                            wire:model.live="pause_until_date"
+                            min="{{ now($this->timezone)->toDateString() }}"
+                            max="{{ now($this->timezone)->addDays(\App\Models\Device::MAX_PAUSE_DAYS)->toDateString() }}"
+                        />
+                        <flux:input type="time" label="Time" wire:model.live="pause_until_time" />
+                    </div>
+                    <flux:text class="text-zinc-500">Timezone: {{ $this->timezone }}</flux:text>
+                    <flux:text class="mt-2 mb-4">The device will still ping the server every 24 hours.</flux:text>
+                    <flux:error name="pause_until_date" />
+
+                    <div class="flex">
+                        <flux:spacer />
+                        <flux:modal.close>
+                            <flux:button variant="ghost">Cancel</flux:button>
+                        </flux:modal.close>
+                        <flux:button type="submit" variant="primary">Save</flux:button>
+                    </div>
+                </form>
+            </div>
+        </flux:modal>
+
+        <flux:modal name="unpause-device-{{ $device->id }}">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Pause Active</flux:heading>
+                </div>
+
+                <flux:callout variant="info" icon="pause-circle">
+                    <flux:callout.heading>
+                        Paused until {{ $device->pause_until?->timezone($this->timezone) }} {{ $this->timezone }}
+                    </flux:callout.heading>
+                    <flux:callout.text>
+                        @if ($device->usesTouchBar())
+                            To exit pause early, click "End pause" and press the touch bar in the middle of your device.
+                        @else
+                            To exit pause early, click "End pause" and press the physical screen button on your device.
+                        @endif
+                    </flux:callout.text>
+                    <x-slot name="actions">
+                        <flux:button wire:click="unpauseDevice({{ $device->id }})" variant="primary">
+                            End pause
+                        </flux:button>
+                    </x-slot>
+                </flux:callout>
+
+                <div class="flex">
+                    <flux:spacer />
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Close</flux:button>
+                    </flux:modal.close>
+                </div>
+            </div>
+        </flux:modal>
+    @endforeach
+</div>

@@ -31,8 +31,13 @@ new class extends Component
 
 ?>
 
-<div>
-    <flux:radio.group wire:model.live="section" variant="segmented" size="lg" class="max-w-full">
+<div class="max-w-full overflow-x-auto overscroll-x-contain">
+    <flux:radio.group
+        wire:model.live="section"
+        variant="segmented"
+        size="lg"
+        class="inline-flex w-max min-w-full sm:min-w-0"
+    >
         <flux:radio value="devices" label="{{ __('Devices') }}" />
         <flux:radio value="device-models" label="{{ __('Device Models') }}" />
         <flux:radio value="device-palettes" label="{{ __('Device Palettes') }}" />

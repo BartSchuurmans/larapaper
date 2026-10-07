@@ -271,9 +271,11 @@ new class extends Component
 <div>
     <div class="py-12">
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="mb-6 flex items-center justify-between">
-                <livewire:device-resource-nav />
-                <flux:button.group>
+            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="w-full min-w-0 sm:flex-1">
+                    <livewire:device-resource-nav />
+                </div>
+                <flux:button.group class="w-full shrink-0 sm:w-auto">
                     <flux:modal.trigger name="device-model-modal">
                         <flux:button wire:click="openDeviceModelModal()" icon="plus" variant="primary"
                             >Add Device Model</flux:button>
@@ -558,19 +560,19 @@ new class extends Component
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Description</div>
                         </th>
                         <th
-                            class="px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 dark:text-white"
+                            class="hidden px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 md:table-cell dark:text-white"
                             data-flux-column
                         >
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Width</div>
                         </th>
                         <th
-                            class="px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 dark:text-white"
+                            class="hidden px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 md:table-cell dark:text-white"
                             data-flux-column
                         >
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Height</div>
                         </th>
                         <th
-                            class="px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 dark:text-white"
+                            class="hidden px-3 py-3 text-left text-sm font-medium text-zinc-800 first:pl-0 last:pr-0 md:table-cell dark:text-white"
                             data-flux-column
                         >
                             <div class="group-[]/right-align:justify-end flex whitespace-nowrap">Bit Depth</div>
@@ -595,13 +597,13 @@ new class extends Component
                                     <div class="text-xs text-zinc-500">{{ Str::limit($deviceModel->name, 50) }}</div>
                                 </div>
                             </td>
-                            <td class="px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 dark:text-zinc-300">
+                            <td class="hidden px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 md:table-cell dark:text-zinc-300">
                                 {{ $deviceModel->width }}
                             </td>
-                            <td class="px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 dark:text-zinc-300">
+                            <td class="hidden px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 md:table-cell dark:text-zinc-300">
                                 {{ $deviceModel->height }}
                             </td>
-                            <td class="px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 dark:text-zinc-300">
+                            <td class="hidden px-3 py-3 text-sm whitespace-nowrap text-zinc-500 first:pl-0 last:pr-0 md:table-cell dark:text-zinc-300">
                                 {{ $deviceModel->bit_depth }}
                             </td>
                             <td class="px-3 py-3 text-sm font-medium whitespace-nowrap text-zinc-800 first:pl-0 last:pr-0 dark:text-white">
