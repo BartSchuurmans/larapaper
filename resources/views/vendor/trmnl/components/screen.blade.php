@@ -19,18 +19,9 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    @if (config('trmnl-blade.framework_css_url'))
-        <link rel="stylesheet"
-              href="{{ config('trmnl-blade.framework_css_url') }}">
-    @else
-        <link rel="stylesheet"
-              href="{{ config('services.trmnl.base_url') }}/css/{{ $resolvedFrameworkVersion }}/plugins.css">
-    @endif
-    @if (config('trmnl-blade.framework_js_url'))
-        <script src="{{ config('trmnl-blade.framework_js_url') }}"></script>
-    @else
-        <script src="{{ config('services.trmnl.base_url') }}/js/{{ $resolvedFrameworkVersion }}/plugins.js"></script>
-    @endif
+    <link rel="stylesheet"
+          href="{{ \Bnussbau\TrmnlBlade\Support\FrameworkAssets::cssUrl($resolvedFrameworkVersion) }}">
+    <script src="{{ \Bnussbau\TrmnlBlade\Support\FrameworkAssets::jsUrl($resolvedFrameworkVersion) }}"></script>
     <title>{{ $title ?? config('app.name') }}</title>
     @if(config('app.puppeteer_window_size_strategy') === 'v2' && !empty($cssVariables) && is_array($cssVariables))
         <style>
