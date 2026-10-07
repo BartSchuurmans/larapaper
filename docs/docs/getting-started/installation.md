@@ -43,6 +43,22 @@ docker compose up -d
 | **Umbrel** | Community store: [umbrel-store](https://github.com/bnussbau/umbrel-store) |
 | **Laravel Forge / bare metal** | PHP 8.4+, Nginx or Apache, see [Requirements](/getting-started/requirements). |
 
+## Serving under a sub-path
+
+To serve LaraPaper under a path such as `https://example.com/larapaper/`, have the reverse proxy
+strip the path and send it in an `X-Forwarded-Prefix` header, and add the proxy to
+`TRUSTED_PROXIES`. Links, redirects and assets then include the path. Nginx example:
+
+```nginx
+location /larapaper/ {
+    proxy_pass http://127.0.0.1:4567/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Prefix /larapaper;
+}
+```
+
 ## First login
 
 - **Local:** open `http://localhost:4567` and sign in with `admin@example.com` / `admin@example.com` (after seeding).

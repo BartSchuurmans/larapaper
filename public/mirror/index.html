@@ -4,17 +4,17 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <title>LaraPaper Mirror</title>
-  <link rel="manifest" href="/mirror/manifest.json" />
+  <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <link rel="apple-touch-icon" type="image/png" href="/mirror/assets/apple-touch-icon-76x76.png" sizes="76x76" />
-  <link rel="apple-touch-icon" type="image/png" href="/mirror/assets/apple-touch-icon-120x120.png" sizes="120x120" />
-  <link rel="apple-touch-icon" type="image/png" href="/mirror/assets/apple-touch-icon-152x152.png" sizes="152x152" />
-  <link rel="apple-touch-icon" type="image/png" href="/mirror/assets/apple-touch-icon-167x167.png" sizes="167x167" />
-  <link rel="apple-touch-icon" type="image/png" href="/mirror/assets/apple-touch-icon-180x180.png" sizes="180x180" />
+  <link rel="apple-touch-icon" type="image/png" href="assets/apple-touch-icon-76x76.png" sizes="76x76" />
+  <link rel="apple-touch-icon" type="image/png" href="assets/apple-touch-icon-120x120.png" sizes="120x120" />
+  <link rel="apple-touch-icon" type="image/png" href="assets/apple-touch-icon-152x152.png" sizes="152x152" />
+  <link rel="apple-touch-icon" type="image/png" href="assets/apple-touch-icon-167x167.png" sizes="167x167" />
+  <link rel="apple-touch-icon" type="image/png" href="assets/apple-touch-icon-180x180.png" sizes="180x180" />
 
-  <link rel="icon" type="image/png" href="/mirror/assets/favicon-16x16.png" sizes="16x16" />
-  <link rel="icon" type="image/png" href="/mirror/assets/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="assets/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="assets/favicon-32x32.png" sizes="32x32" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script>
     var trmnl = {
@@ -393,11 +393,14 @@
           origin += ":" + port;
         }
 
+        // Keep the path in front of /mirror/, if LaraPaper is served under one
+        var baseUrl = origin + window.location.pathname.replace(/\/mirror(\/[^\/]*)?$/, "");
+
         trmnl.saveSettings({
-          base_url: origin
+          base_url: baseUrl
         });
 
-        console.log("Default base_url set to:", origin);
+        console.log("Default base_url set to:", baseUrl);
       },
 
       clearSettings: function () {
@@ -837,7 +840,7 @@
 <body>
   <div id="setup" style="display: none;">
     <div id="setup-panel">
-      <img src="/mirror/assets/logo--brand.svg" alt="TRMNL Logo" />
+      <img src="assets/logo--brand.svg" alt="TRMNL Logo" />
 
       <form onsubmit="return trmnl.saveSetup(event)">
 
