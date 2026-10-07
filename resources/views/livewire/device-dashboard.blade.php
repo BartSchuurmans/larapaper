@@ -12,140 +12,146 @@ new class extends Component
 ?>
 
 <div>
-    <div class="bg-muted flex flex-col items-center justify-center gap-6 p-6 md:p-10">
-        <div class="flex w-full max-w-3xl flex-col gap-6">
+    <div class="bg-muted flex flex-col items-center justify-center p-4 sm:p-6">
+        <div class="mx-auto flex w-full max-w-3xl flex-col gap-4">
             @if ($devices->isEmpty())
-                <div class="flex flex-col gap-6">
-                    <div class="styled-container">
-                        <div class="px-10 py-8">
-                            <h1 class="text-xl font-medium dark:text-zinc-200">Add your first device</h1>
-                            <flux:button
-                                href="{{ route('devices') }}"
-                                class="mt-4"
-                                icon="plus-circle"
-                                variant="primary"
-                                class="mt-4 w-full"
-                                >Add Device
-                            </flux:button>
-                        </div>
-                    </div>
-                </div>
+                <flux:card>
+                    <flux:card.header>
+                        <flux:card.heading>Add your first device</flux:card.heading>
+                    </flux:card.header>
+
+                    <flux:card.body>
+                        <flux:button
+                            href="{{ route('devices') }}"
+                            class="mt-2 w-full sm:w-auto"
+                            icon="plus-circle"
+                            variant="primary"
+                        >
+                            Add Device
+                        </flux:button>
+                    </flux:card.body>
+                </flux:card>
             @endif
 
             @foreach ($devices as $device)
-                <div class="flex flex-col gap-6">
-                    <div class="styled-container">
-                        <div class="px-10 py-8">
-                            @php
-                                $current_image_uuid = $device->current_screen_image;
-                                if ($current_image_uuid) {
-                                    $file_extension = Storage::disk('public')->exists('images/generated/'.$current_image_uuid.'.png') ? 'png' : 'bmp';
-                                    $current_image_url = Storage::disk('public')->url('images/generated/'.$current_image_uuid.'.'.$file_extension);
-                                } else {
-                                    $current_image_url = asset('storage/images/setup-logo.bmp');
-                                }
-                            @endphp
+                @php
+                    $current_image_uuid = $device->current_screen_image;
+                    if ($current_image_uuid) {
+                        $file_extension = Storage::disk('public')->exists('images/generated/'.$current_image_uuid.'.png') ? 'png' : 'bmp';
+                        $current_image_url = Storage::disk('public')->url('images/generated/'.$current_image_uuid.'.'.$file_extension);
+                    } else {
+                        $current_image_url = asset('storage/images/setup-logo.bmp');
+                    }
+                @endphp
 
-                            <div class="flex items-center justify-between gap-4">
-                                <flux:tooltip content="Friendly ID: {{ $device->friendly_id }}" position="bottom">
+                <flux:card body="divided">
+                    <flux:card.header class="items-start sm:items-center">
+                        <flux:card.heading class="w-full min-w-0 flex-1">
+                            <div class="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                                <flux:tooltip
+                                    content="Friendly ID: {{ $device->friendly_id }}"
+                                    position="bottom"
+                                    class="min-w-0 shrink-0 sm:max-w-[12rem]"
+                                >
                                     <a
                                         href="{{ route('devices.configure', $device) }}"
                                         wire:navigate
-                                        class="text-xl font-medium hover:underline dark:text-zinc-200"
+                                        class="block truncate text-base font-medium hover:underline"
                                     >{{ $device->name }}</a>
                                 </flux:tooltip>
-                                <div class="flex gap-2">
-                                    <flux:tooltip content="Last refresh" position="bottom">
-                                        <span class="dark:text-zinc-200">{{ $device->last_refreshed_at?->diffForHumans() }}</span>
+
+                                <div class="flex w-full flex-wrap items-center justify-evenly gap-x-3 gap-y-2 text-sm font-normal sm:mx-auto sm:flex-1">
+                                    <flux:tooltip content="Last refresh" position="bottom" class="mx-auto shrink-0">
+                                        <span class="whitespace-nowrap">{{ $device->last_refreshed_at?->diffForHumans() }}</span>
                                     </flux:tooltip>
-                                    <flux:separator vertical class="hidden md:block" />
-                                    <flux:tooltip content="MAC Address" position="bottom" class="hidden md:block">
-                                        <span class="dark:text-zinc-200">{{ $device->mac_address }}</span>
+
+                                    <flux:tooltip
+                                        content="MAC Address"
+                                        position="bottom"
+                                        class="mx-auto min-w-0 shrink-0"
+                                    >
+                                        <span class="text-center font-mono text-xs break-all sm:text-sm">{{ $device->mac_address }}</span>
                                     </flux:tooltip>
+
                                     @if ($device->last_firmware_version)
-                                        <flux:separator vertical class="hidden md:block" />
                                         <flux:tooltip
                                             content="Firmware Version"
                                             position="bottom"
-                                            class="hidden md:block"
+                                            class="mx-auto shrink-0"
                                         >
-                                            <span class="dark:text-zinc-200">{{ $device->last_firmware_version }}</span>
+                                            <span class="whitespace-nowrap">{{ $device->last_firmware_version }}</span>
                                         </flux:tooltip>
                                     @endif
+
                                     @if ($device->wifiStrength)
-                                        <flux:separator vertical class="hidden md:block" />
-                                        <x-responsive-icons.wifi
-                                            :strength="$device->wifiStrength"
-                                            :rssi="$device->last_rssi_level"
-                                            class="hidden md:block dark:text-zinc-200"
-                                        />
+                                        <flux:tooltip content="Wi-Fi signal" position="bottom" class="mx-auto shrink-0">
+                                            <x-responsive-icons.wifi
+                                                :strength="$device->wifiStrength"
+                                                :rssi="$device->last_rssi_level"
+                                                class="dark:text-zinc-200"
+                                            />
+                                        </flux:tooltip>
                                     @endif
+
                                     @if ($device->batteryPercent)
-                                        <flux:separator vertical class="hidden md:block" />
-                                        <x-responsive-icons.battery
-                                            :percent="$device->batteryPercent"
-                                            class="hidden md:block"
-                                        />
+                                        <flux:tooltip content="Battery" position="bottom" class="mx-auto shrink-0">
+                                            <x-responsive-icons.battery :percent="$device->batteryPercent" />
+                                        </flux:tooltip>
                                     @endif
-                                </div>
-                                <div>
-                                    <flux:dropdown>
-                                        <flux:button icon="ellipsis-horizontal" variant="subtle"></flux:button>
-                                        <flux:menu>
-                                            <flux:menu.item icon="eye" href="{{ route('devices.configure', $device) }}">
-                                                View</flux:menu.item>
-                                            <flux:menu.item
-                                                icon="bars-3"
-                                                href="{{ route('devices.logs', $device) }}"
-                                                wire:navigate
-                                            >
-                                                Show Logs</flux:menu.item>
-                                        </flux:menu>
-                                    </flux:dropdown>
                                 </div>
                             </div>
-                            @if ($device->mirror_device_id)
-                                <flux:separator class="mt-2 mb-4" />
-                                <flux:callout variant="info">
-                                    <div class="flex items-center gap-2">
-                                        <flux:icon.link class="dark:text-zinc-200" />
-                                        <flux:text>
-                                            This device is mirrored from
-                                            <a
-                                                href="{{ route('devices.configure', $device->mirrorDevice) }}"
-                                                class="font-medium hover:underline"
-                                            >
-                                                {{ $device->mirrorDevice->name }}
-                                            </a>
-                                        </flux:text>
-                                    </div>
-                                </flux:callout>
-                            @elseif ($current_image_url)
-                                <flux:separator class="mt-2 mb-4" />
-                                <div class="flex justify-center">
-                                    <div class="relative origin-center rotate-[{{ $device->preview_rotation }}deg]">
-                                        <img src="{{ $current_image_url }}" class="max-h-[480px]" alt="Current Image" />
-                                    </div>
+                        </flux:card.heading>
+
+                        <flux:card.actions>
+                            <flux:dropdown>
+                                <flux:button icon="ellipsis-horizontal" aria-label="Device actions" />
+                                <flux:menu>
+                                    <flux:menu.item icon="eye" href="{{ route('devices.configure', $device) }}">
+                                        View
+                                    </flux:menu.item>
+                                    <flux:menu.item
+                                        icon="bars-3"
+                                        href="{{ route('devices.logs', $device) }}"
+                                        wire:navigate
+                                    >
+                                        Show Logs
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:card.actions>
+                    </flux:card.header>
+
+                    <flux:card.body>
+                        @if ($device->mirror_device_id)
+                            <flux:callout variant="info">
+                                <div class="flex items-center gap-2">
+                                    <flux:icon.link />
+                                    <flux:text>
+                                        This device is mirrored from
+                                        <a
+                                            href="{{ route('devices.configure', $device->mirrorDevice) }}"
+                                            wire:navigate
+                                            class="font-medium hover:underline"
+                                        >
+                                            {{ $device->mirrorDevice->name }}
+                                        </a>
+                                    </flux:text>
                                 </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
+                            </flux:callout>
+                        @elseif ($current_image_url)
+                            <div class="flex justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+                                <div class="relative origin-center rotate-[{{ $device->preview_rotation }}deg]">
+                                    <img
+                                        src="{{ $current_image_url }}"
+                                        class="max-h-[min(480px,70vh)] max-w-full object-contain"
+                                        alt="Current screen"
+                                    />
+                                </div>
+                            </div>
+                        @endif
+                    </flux:card.body>
+                </flux:card>
             @endforeach
         </div>
     </div>
-
-    {{--    @php--}}
-    {{--        $current_image_uuid = auth()->user()?->devices()?->first()?->current_screen_image;--}}
-    {{--        $current_image_path = 'images/generated/' . $current_image_uuid . '.png';--}}
-    {{--    @endphp--}}
-    {{--    @if($current_image_uuid)--}}
-    {{--        <h1 class="text-xl font-medium dark:text-zinc-200">TRMNL Giveaway</h1>--}}
-    {{--        <p class="text-sm dark:text-zinc-400">D8:3B:DA:F3:C1:DC</p>--}}
-    {{--        <flux:separator class="mt-2 mb-4"/>--}}
-    {{--        <img src="{{ asset($current_image_path) }}" alt="Current Image"/>--}}
-    {{--    @else--}}
-    {{--        <h1 class="text-xl font-medium dark:text-zinc-200">Add your first device</h1>--}}
-    {{--        <flux:button href="{{ route('devices') }}" class="mt-4"  icon="plus-circle" variant="primary">Add Device</flux:button>--}}
-    {{--    @endif--}}
 </div>
