@@ -26,9 +26,14 @@ class extends Component
 
     public array $previewData = [];
 
+    public string $sortBy = 'newest';
+
+    /** @var list<string> */
+    private const ALLOWED_SORTS = ['newest', 'popularity', 'oldest'];
+
     public function mount(): void
     {
-        $this->loadNewest();
+        $this->loadRecipes();
     }
 
     public function placeholder()
@@ -45,15 +50,24 @@ class extends Component
         HTML;
     }
 
-    private function loadNewest(): void
+    private function resolvedSortBy(): string
     {
+        return in_array($this->sortBy, self::ALLOWED_SORTS, true)
+            ? $this->sortBy
+            : 'newest';
+    }
+
+    private function loadRecipes(): void
+    {
+        $sort = $this->resolvedSortBy();
+
         try {
-            $cacheKey = 'trmnl_recipes_newest_page_'.$this->page;
-            $response = Cache::remember($cacheKey, 43200, function () {
+            $cacheKey = 'trmnl_recipes_'.$sort.'_page_'.$this->page;
+            $response = Cache::remember($cacheKey, 43200, function () use ($sort) {
                 $response = Http::timeout(10)->get(
                     config('services.trmnl.base_url').'/recipes.json',
                     [
-                        'sort-by' => 'newest',
+                        'sort-by' => $sort,
                         'page' => $this->page,
                     ]
                 );
@@ -87,14 +101,16 @@ class extends Component
     private function searchRecipes(string $term): void
     {
         $this->isSearching = true;
+        $sort = $this->resolvedSortBy();
+
         try {
-            $cacheKey = 'trmnl_recipes_search_'.md5($term).'_page_'.$this->page;
-            $response = Cache::remember($cacheKey, 300, function () use ($term) {
+            $cacheKey = 'trmnl_recipes_search_'.md5($term).'_'.$sort.'_page_'.$this->page;
+            $response = Cache::remember($cacheKey, 300, function () use ($term, $sort) {
                 $response = Http::get(
                     config('services.trmnl.base_url').'/recipes.json',
                     [
                         'search' => $term,
-                        'sort-by' => 'newest',
+                        'sort-by' => $sort,
                         'page' => $this->page,
                     ]
                 );
@@ -133,7 +149,7 @@ class extends Component
 
         $term = mb_trim($this->search);
         if ($term === '' || mb_strlen($term) < 2) {
-            $this->loadNewest();
+            $this->loadRecipes();
         } else {
             $this->searchRecipes($term);
         }
@@ -144,13 +160,26 @@ class extends Component
         $this->page = 1;
         $term = mb_trim($this->search);
         if ($term === '') {
-            $this->loadNewest();
+            $this->loadRecipes();
 
             return;
         }
 
         if (mb_strlen($term) < 2) {
             // Require at least 2 chars to avoid noisy calls
+            return;
+        }
+
+        $this->searchRecipes($term);
+    }
+
+    public function updatedSortBy(): void
+    {
+        $this->page = 1;
+        $term = mb_trim($this->search);
+        if ($term === '' || mb_strlen($term) < 2) {
+            $this->loadRecipes();
+
             return;
         }
 
@@ -266,7 +295,13 @@ class extends Component
                 icon="magnifying-glass"
             />
         </div>
-        <flux:badge color="zinc">Newest</flux:badge>
+        <div class="w-40 shrink-0">
+            <flux:select wire:model.live="sortBy" size="sm">
+                <option value="newest">Newest</option>
+                <option value="popularity">Popularity</option>
+                <option value="oldest">Oldest</option>
+            </flux:select>
+        </div>
     </div>
 
     @if(empty($recipes))
