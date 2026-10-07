@@ -36,6 +36,55 @@ it('imports plugin with framework_version from settings', function (): void {
     expect($plugin->framework_version)->toBe('3.0.5');
 });
 
+it('imports screen settings when yaml says yes', function (): void {
+    $user = User::factory()->create();
+
+    $settingsYaml = str_replace(
+        "name: Test Plugin\n",
+        "name: Test Plugin\nno_screen_padding: yes\ndark_mode: yes\n",
+        getValidSettingsYaml()
+    );
+
+    $zipContent = createMockZipFile([
+        'src/settings.yml' => $settingsYaml,
+        'src/full.liquid' => getValidFullLiquid(),
+    ]);
+
+    $zipFile = UploadedFile::fake()->createWithContent('test-plugin.zip', $zipContent);
+
+    $pluginImportService = new PluginImportService();
+    $plugin = $pluginImportService->importFromZip($zipFile, $user);
+
+    expect($plugin->no_bleed)->toBeTrue()
+        ->and($plugin->dark_mode)->toBeTrue();
+});
+
+it('leaves screen settings off when yaml says no or omits them', function (string $screenSettingsYaml): void {
+    $user = User::factory()->create();
+
+    $settingsYaml = str_replace(
+        "name: Test Plugin\n",
+        "name: Test Plugin\n".$screenSettingsYaml,
+        getValidSettingsYaml()
+    );
+
+    $zipContent = createMockZipFile([
+        'src/settings.yml' => $settingsYaml,
+        'src/full.liquid' => getValidFullLiquid(),
+    ]);
+
+    $zipFile = UploadedFile::fake()->createWithContent('test-plugin.zip', $zipContent);
+
+    $pluginImportService = new PluginImportService();
+    $plugin = $pluginImportService->importFromZip($zipFile, $user);
+
+    expect($plugin->no_bleed)->toBeFalse()
+        ->and($plugin->dark_mode)->toBeFalse();
+})->with([
+    'omitted' => [''],
+    'explicit no' => ["no_screen_padding: no\ndark_mode: no\n"],
+]);
+
 it('imports plugin from valid zip file', function (): void {
     $user = User::factory()->create();
 

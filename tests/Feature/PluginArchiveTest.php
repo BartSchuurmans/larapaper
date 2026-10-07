@@ -9,6 +9,7 @@ use App\Services\PluginImportService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
+use Symfony\Component\Yaml\Yaml;
 
 beforeEach(function (): void {
     Storage::fake('local');
@@ -90,6 +91,8 @@ it('exports and imports plugin maintaining all data', function (): void {
             ],
         ],
         'data_payload' => ['items' => [1, 2, 3]],
+        'no_bleed' => true,
+        'dark_mode' => true,
     ]);
 
     // Export the plugin
@@ -120,7 +123,38 @@ it('exports and imports plugin maintaining all data', function (): void {
         ->and($importedPlugin->markup_language)->toBe('liquid')
         ->and($importedPlugin->render_markup)->toContain('Hello {{ config.name }}!')
         ->and($importedPlugin->configuration_template['custom_fields'])->toHaveCount(2)
-        ->and($importedPlugin->data_payload)->toBe(['items' => [1, 2, 3]]);
+        ->and($importedPlugin->data_payload)->toBe(['items' => [1, 2, 3]])
+        ->and($importedPlugin->no_bleed)->toBeTrue()
+        ->and($importedPlugin->dark_mode)->toBeTrue();
+});
+
+it('exports screen settings as trmnl yes values', function (): void {
+    $user = User::factory()->create();
+    $plugin = Plugin::factory()->create([
+        'user_id' => $user->id,
+        'name' => 'Screen Settings Plugin',
+        'trmnlp_id' => 'screen-settings-1',
+        'no_bleed' => true,
+        'dark_mode' => true,
+        'markup_language' => 'liquid',
+        'render_markup' => '<div>Test</div>',
+    ]);
+
+    $exporter = app(PluginExportService::class);
+    $response = $exporter->exportToZip($plugin, $user);
+
+    $zipPath = $response->getFile()->getPathname();
+    $zip = new ZipArchive();
+    $zip->open($zipPath);
+
+    $temporaryDirectory = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
+    $tempDir = $temporaryDirectory->path();
+    $zip->extractTo($tempDir, 'settings.yml');
+    $settings = Yaml::parse((string) file_get_contents($tempDir.'/settings.yml'));
+    $zip->close();
+
+    expect($settings['no_screen_padding'])->toBe('yes')
+        ->and($settings['dark_mode'])->toBe('yes');
 });
 
 it('handles blade templates correctly', function (): void {

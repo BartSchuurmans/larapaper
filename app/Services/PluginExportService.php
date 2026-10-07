@@ -110,8 +110,8 @@ class PluginExportService
 
         // Add fields in the specific order requested
         $settings['name'] = $plugin->name;
-        $settings['no_screen_padding'] = 'no'; // Default value
-        $settings['dark_mode'] = 'no'; // Default value
+        $settings['no_screen_padding'] = $plugin->no_bleed ? 'yes' : 'no';
+        $settings['dark_mode'] = $plugin->dark_mode ? 'yes' : 'no';
         $settings['strategy'] = $plugin->data_strategy;
 
         // Add static data if available
