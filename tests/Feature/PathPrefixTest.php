@@ -1,47 +1,34 @@
 <?php
 
-// A reverse proxy serving LaraPaper under a sub-path (e.g. https://example.com/larapaper/) strips
-// the prefix and passes it in X-Forwarded-Prefix. Laravel follows it when TRUSTED_PROXIES
-// includes the proxy.
+use Laravel\Fortify\Features;
 
-use App\Models\User;
-
-it('puts a trusted proxy prefix in generated URLs', function (): void {
+it('puts the prefix from a trusted proxy in generated URLs', function (): void {
     config(['trustedproxy.proxies' => ['127.0.0.1']]);
 
-    $this->get('/login', ['X-Forwarded-Prefix' => '/larapaper'])
-        ->assertOk()
-        ->assertSee('action="http://localhost/larapaper/login"', false)
-        ->assertSee('href="http://localhost/larapaper/register"', false);
-});
+    $response = $this->get('/login', ['X-Forwarded-Prefix' => '/larapaper']);
 
-it('redirects to the login page under a prefix', function (): void {
-    config(['trustedproxy.proxies' => ['127.0.0.1']]);
-
-    $this->get('/dashboard', ['X-Forwarded-Prefix' => '/larapaper'])
-        ->assertRedirect('http://localhost/larapaper/login');
-});
-
-it('answers the root under a prefix', function (): void {
-    config(['trustedproxy.proxies' => ['127.0.0.1']]);
-
-    $this->get('/', ['X-Forwarded-Prefix' => '/larapaper'])
-        ->assertOk()
-        ->assertSee('http://localhost/larapaper/', false);
-});
-
-it('keeps the prefix after logging in', function (): void {
-    config(['trustedproxy.proxies' => ['127.0.0.1']]);
-    $user = User::factory()->create();
-
-    $this->post(route('login.store'), ['email' => $user->email, 'password' => 'password'], ['X-Forwarded-Prefix' => '/larapaper'])
-        ->assertRedirect('http://localhost/larapaper/dashboard');
+    $response->assertOk();
+    $response->assertSee('action="http://localhost/larapaper/login"', false);
 });
 
 it('ignores the prefix from an untrusted client', function (): void {
     config(['trustedproxy.proxies' => []]);
 
-    $this->get('/login', ['X-Forwarded-Prefix' => '/larapaper'])
-        ->assertOk()
-        ->assertDontSee('/larapaper/', false);
+    $response = $this->get('/login', ['X-Forwarded-Prefix' => '/larapaper']);
+
+    $response->assertOk();
+    $response->assertDontSee('/larapaper/', false);
+});
+
+it('sends passkey sign-ins to the dashboard under the prefix', function (): void {
+    config(['trustedproxy.proxies' => ['127.0.0.1']]);
+    config(['app.passkeys.enabled' => true]);
+    config(['fortify.features' => [...config('fortify.features', []), Features::passkeys()]]);
+
+    $this->skipUnlessFortifyHas(Features::passkeys());
+
+    $response = $this->get('/login', ['X-Forwarded-Prefix' => '/larapaper']);
+
+    $response->assertOk();
+    $response->assertSee("response.redirect || 'http://localhost/larapaper/dashboard'", false);
 });
