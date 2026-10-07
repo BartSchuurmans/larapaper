@@ -7,7 +7,7 @@ use App\Services\Plugin\Parsers\IcalResponseParser;
 use Carbon\Carbon;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use om\IcalParser;
+use om\ICal;
 
 test('iCal plugin parses Google Calendar invitation event', function (): void {
     // Set test time close to the event in the issue
@@ -230,7 +230,7 @@ ICS;
 
     Carbon::setTestNow();
 });
-test('om IcalParser resets X-WR-TIMEZONE between parseString calls so a reused instance does not shift floating wall times', function (): void {
+test('om ICal creates independent calendar instances so floating times are not shifted', function (): void {
     $calendarBerlin = <<<'ICS'
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -260,22 +260,16 @@ END:VEVENT
 END:VCALENDAR
 ICS;
 
-    $parser = new IcalParser;
-    $parser->parseString($calendarBerlin);
+    $calendar1 = ICal::parse($calendarBerlin);
+    expect($calendar1->floatingTimezone())->not->toBeNull();
 
-    expect($parser->timezone)->not->toBeNull();
+    $calendar2 = ICal::parse($calendarFloatingOnly);
+    expect($calendar2->floatingTimezone())->toBeNull();
 
-    $parser->parseString($calendarFloatingOnly);
+    $event = $calendar2->events()[0];
+    expect($event->summary())->toBe('Floating wall clock');
 
-    expect($parser->timezone)->toBeNull();
-
-    $event = $parser->getEvents()->sorted()->getArrayCopy()[0];
-
-    expect($event['SUMMARY'])->toBe('Floating wall clock');
-
-    $startUtcHour = Carbon::instance($event['DTSTART'])->utc()->format('H:i');
-
-    // Floating 12:25 stays 12:25 UTC: parseString resets $timezone unless the calendar is appended.
+    $startUtcHour = Carbon::instance($event->start()->toDateTime(null, new DateTimeZone('UTC')))->utc()->format('H:i');
     expect($startUtcHour)->toBe('12:25');
 });
 
@@ -346,6 +340,166 @@ ICS;
     $parser->parse(new Response(new GuzzleHttp\Psr7\Response(200, ['Content-Type' => 'text/calendar'], $calendarWithRecurring)));
 
     expect(date_default_timezone_get())->toBe('UTC');
+
+    Carbon::setTestNow();
+});
+
+test('iCal plugin sets all_day flag for date-only and timed events', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-03-25 12:00:00', 'UTC'));
+
+    $icalContent = <<<'ICS'
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//EN
+BEGIN:VEVENT
+UID:allday-explicit-value-date@example.com
+DTSTAMP:20260301T100000Z
+DTSTART;VALUE=DATE:20260326
+DTEND;VALUE=DATE:20260327
+SUMMARY:All Day Event (VALUE=DATE)
+END:VEVENT
+BEGIN:VEVENT
+UID:allday-implicit-date@example.com
+DTSTAMP:20260301T100000Z
+DTSTART:20260328
+DTEND:20260329
+SUMMARY:All Day Event (Date Only)
+END:VEVENT
+BEGIN:VEVENT
+UID:timed-utc-event@example.com
+DTSTAMP:20260301T100000Z
+DTSTART:20260326T100000Z
+DTEND:20260326T110000Z
+SUMMARY:Timed Event (UTC)
+END:VEVENT
+BEGIN:VEVENT
+UID:timed-zoned-event@example.com
+DTSTAMP:20260301T100000Z
+DTSTART;TZID=Europe/Budapest:20260326T140000
+DTEND;TZID=Europe/Budapest:20260326T150000
+SUMMARY:Timed Event (Zoned)
+END:VEVENT
+END:VCALENDAR
+ICS;
+
+    Http::fake([
+        'example.com/calendar.ics' => Http::response($icalContent, 200, ['Content-Type' => 'text/calendar']),
+    ]);
+
+    $plugin = Plugin::factory()->create([
+        'data_strategy' => 'polling',
+        'polling_url' => 'https://example.com/calendar.ics',
+        'polling_verb' => 'get',
+    ]);
+
+    $plugin->updateDataPayload();
+    $plugin->refresh();
+
+    expect($plugin->data_payload)->toHaveKey('ical')
+        ->and($plugin->data_payload['ical'])->toHaveCount(4);
+
+    $eventsBySummary = collect($plugin->data_payload['ical'])->keyBy('SUMMARY');
+
+    expect($eventsBySummary->get('All Day Event (VALUE=DATE)'))
+        ->all_day->toBeTrue()
+        ->not->toHaveKey('allday')
+        ->and($eventsBySummary->get('All Day Event (Date Only)'))
+        ->all_day->toBeTrue()
+        ->not->toHaveKey('allday')
+        ->and($eventsBySummary->get('Timed Event (UTC)'))
+        ->all_day->toBeFalse()
+        ->not->toHaveKey('allday')
+        ->and($eventsBySummary->get('Timed Event (Zoned)'))
+        ->all_day->toBeFalse()
+        ->not->toHaveKey('allday');
+
+    Carbon::setTestNow();
+});
+
+test('iCal plugin sets all_day flag across recurring all-day event occurrences', function (): void {
+    Carbon::setTestNow(Carbon::parse('2024-03-25 12:00:00', 'UTC'));
+
+    $icalContent = <<<'ICS'
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//EN
+BEGIN:VEVENT
+UID:recurring-allday@example.com
+RRULE:FREQ=WEEKLY;UNTIL=20240415T000000Z;INTERVAL=1;BYDAY=TU,TH
+SUMMARY:Recurring All-Day Meeting
+DTSTART;VALUE=DATE:20240326
+DTEND;VALUE=DATE:20240327
+DTSTAMP:20240301T000000Z
+END:VEVENT
+END:VCALENDAR
+ICS;
+
+    Http::fake([
+        'example.com/recurring-allday.ics' => Http::response($icalContent, 200, ['Content-Type' => 'text/calendar']),
+    ]);
+
+    $plugin = Plugin::factory()->create([
+        'data_strategy' => 'polling',
+        'polling_url' => 'https://example.com/recurring-allday.ics',
+        'polling_verb' => 'get',
+    ]);
+
+    $plugin->updateDataPayload();
+    $plugin->refresh();
+
+    $ical = $plugin->data_payload['ical'];
+
+    expect($ical)->not->toBeEmpty();
+
+    foreach ($ical as $event) {
+        expect($event)->toHaveKey('all_day', true)
+            ->not->toHaveKey('allday')
+            ->toHaveKey('SUMMARY', 'Recurring All-Day Meeting');
+    }
+
+    Carbon::setTestNow();
+});
+
+test('iCal plugin sets all_day to false across recurring timed event occurrences', function (): void {
+    Carbon::setTestNow(Carbon::parse('2024-03-25 12:00:00', 'UTC'));
+
+    $icalContent = <<<'ICS'
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//EN
+BEGIN:VEVENT
+UID:recurring-timed@example.com
+RRULE:FREQ=WEEKLY;UNTIL=20240415T000000Z;INTERVAL=1;BYDAY=TU,TH
+SUMMARY:Recurring Timed Meeting
+DTSTART:20240326T100000Z
+DTEND:20240326T110000Z
+DTSTAMP:20240301T000000Z
+END:VEVENT
+END:VCALENDAR
+ICS;
+
+    Http::fake([
+        'example.com/recurring-timed.ics' => Http::response($icalContent, 200, ['Content-Type' => 'text/calendar']),
+    ]);
+
+    $plugin = Plugin::factory()->create([
+        'data_strategy' => 'polling',
+        'polling_url' => 'https://example.com/recurring-timed.ics',
+        'polling_verb' => 'get',
+    ]);
+
+    $plugin->updateDataPayload();
+    $plugin->refresh();
+
+    $ical = $plugin->data_payload['ical'];
+
+    expect($ical)->not->toBeEmpty();
+
+    foreach ($ical as $event) {
+        expect($event)->toHaveKey('all_day', false)
+            ->not->toHaveKey('allday')
+            ->toHaveKey('SUMMARY', 'Recurring Timed Meeting');
+    }
 
     Carbon::setTestNow();
 });
