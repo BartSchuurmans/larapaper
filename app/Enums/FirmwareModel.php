@@ -9,12 +9,14 @@ enum FirmwareModel: string
 {
     case Trmnl = 'trmnl';
     case TrmnlX = 'trmnl_x';
+    case TrmnlBwry = 'trmnl_bwry';
 
     public function label(): string
     {
         return match ($this) {
             self::Trmnl => 'TRMNL (OG)',
             self::TrmnlX => 'TRMNL X',
+            self::TrmnlBwry => 'TRMNL OG (B/W/R/Y)',
         };
     }
 
@@ -30,16 +32,20 @@ enum FirmwareModel: string
 
     public static function forDevice(Device $device): self
     {
+        if ($device->deviceModel?->name === 'og_bwry') {
+            return self::TrmnlBwry;
+        }
+
         return $device->usesTouchBar() ? self::TrmnlX : self::Trmnl;
     }
 
     /**
-     * Derive the TRMNL X firmware URL from an OG firmware URL when possible.
+     * Derive a sibling firmware URL from an OG firmware URL when possible.
      */
-    public static function xUrlFromOg(string $ogUrl): ?string
+    public static function siblingUrlFromOg(string $ogUrl, string $suffix): ?string
     {
-        $xUrl = Str::replaceFirst('_og', '_x', $ogUrl);
+        $siblingUrl = Str::replaceFirst('_og', $suffix, $ogUrl);
 
-        return $xUrl !== $ogUrl ? $xUrl : null;
+        return $siblingUrl !== $ogUrl ? $siblingUrl : null;
     }
 }

@@ -39,10 +39,17 @@ class FirmwarePollJob implements ShouldQueue
 
             $this->persistFirmware($model, $version, $url);
 
-            $xUrl = FirmwareModel::xUrlFromOg($url);
+            $siblingFirmware = [
+                [FirmwareModel::TrmnlX, '_x'],
+                [FirmwareModel::TrmnlBwry, '_bwry'],
+            ];
 
-            if ($xUrl !== null && Http::head($xUrl)->successful()) {
-                $this->persistFirmware(FirmwareModel::TrmnlX, $version, $xUrl);
+            foreach ($siblingFirmware as [$siblingModel, $suffix]) {
+                $siblingUrl = FirmwareModel::siblingUrlFromOg($url, $suffix);
+
+                if ($siblingUrl !== null && Http::head($siblingUrl)->successful()) {
+                    $this->persistFirmware($siblingModel, $version, $siblingUrl);
+                }
             }
         } catch (ConnectionException $e) {
             Log::error('Firmware download failed: '.$e->getMessage());

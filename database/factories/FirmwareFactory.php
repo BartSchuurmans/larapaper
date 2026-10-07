@@ -38,6 +38,13 @@ class FirmwareFactory extends Factory
         ]);
     }
 
+    public function trmnlBwry(): static
+    {
+        return $this->state(fn (): array => [
+            'model' => FirmwareModel::TrmnlBwry,
+        ]);
+    }
+
     public function latest(): static
     {
         return $this->state(fn (): array => [

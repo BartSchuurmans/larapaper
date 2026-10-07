@@ -97,6 +97,7 @@ test('it discovers TRMNL X firmware when _x URL returns 200', function (): void 
     $baseUrl = config('services.trmnl.base_url');
     $ogUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_og/FW1.8.12.bin';
     $xUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_x/FW1.8.12.bin';
+    $bwryUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_bwry/FW1.8.12.bin';
 
     Http::fake([
         $baseUrl.'/api/firmware/latest' => Http::response([
@@ -105,6 +106,7 @@ test('it discovers TRMNL X firmware when _x URL returns 200', function (): void 
             'url' => $ogUrl,
         ], 200),
         $xUrl => Http::response('', 200),
+        $bwryUrl => Http::response('Not Found', 404),
     ]);
 
     (new FirmwarePollJob)->handle();
@@ -119,6 +121,7 @@ test('it skips TRMNL X firmware when _x URL does not return 200', function (): v
     $baseUrl = config('services.trmnl.base_url');
     $ogUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_og/FW1.8.12.bin';
     $xUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_x/FW1.8.12.bin';
+    $bwryUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_bwry/FW1.8.12.bin';
 
     Http::fake([
         $baseUrl.'/api/firmware/latest' => Http::response([
@@ -127,12 +130,59 @@ test('it skips TRMNL X firmware when _x URL does not return 200', function (): v
             'url' => $ogUrl,
         ], 200),
         $xUrl => Http::response('Not Found', 404),
+        $bwryUrl => Http::response('Not Found', 404),
     ]);
 
     (new FirmwarePollJob)->handle();
 
     expect(Firmware::query()->forModel(FirmwareModel::Trmnl)->where('version_tag', '1.8.12')->exists())->toBeTrue()
         ->and(Firmware::query()->forModel(FirmwareModel::TrmnlX)->exists())->toBeFalse();
+});
+
+test('it discovers TRMNL BWRY firmware when _bwry URL returns 200', function (): void {
+    $baseUrl = config('services.trmnl.base_url');
+    $ogUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_og/FW1.8.17.bin';
+    $xUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_x/FW1.8.17.bin';
+    $bwryUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_bwry/FW1.8.17.bin';
+
+    Http::fake([
+        $baseUrl.'/api/firmware/latest' => Http::response([
+            'model' => 'trmnl',
+            'version' => '1.8.17',
+            'url' => $ogUrl,
+        ], 200),
+        $xUrl => Http::response('Not Found', 404),
+        $bwryUrl => Http::response('', 200),
+    ]);
+
+    (new FirmwarePollJob)->handle();
+
+    expect(Firmware::query()->forModel(FirmwareModel::Trmnl)->where('version_tag', '1.8.17')->exists())->toBeTrue()
+        ->and(Firmware::query()->forModel(FirmwareModel::TrmnlBwry)->where('version_tag', '1.8.17')->exists())->toBeTrue()
+        ->and(Firmware::query()->forModel(FirmwareModel::TrmnlBwry)->first()->url)->toBe($bwryUrl)
+        ->and(Firmware::query()->forModel(FirmwareModel::TrmnlBwry)->first()->latest)->toBeTrue();
+});
+
+test('it skips TRMNL BWRY firmware when _bwry URL does not return 200', function (): void {
+    $baseUrl = config('services.trmnl.base_url');
+    $ogUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_og/FW1.8.17.bin';
+    $xUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_x/FW1.8.17.bin';
+    $bwryUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_bwry/FW1.8.17.bin';
+
+    Http::fake([
+        $baseUrl.'/api/firmware/latest' => Http::response([
+            'model' => 'trmnl',
+            'version' => '1.8.17',
+            'url' => $ogUrl,
+        ], 200),
+        $xUrl => Http::response('Not Found', 404),
+        $bwryUrl => Http::response('Not Found', 404),
+    ]);
+
+    (new FirmwarePollJob)->handle();
+
+    expect(Firmware::query()->forModel(FirmwareModel::Trmnl)->where('version_tag', '1.8.17')->exists())->toBeTrue()
+        ->and(Firmware::query()->forModel(FirmwareModel::TrmnlBwry)->exists())->toBeFalse();
 });
 
 test('it handles connection exception gracefully', function (): void {

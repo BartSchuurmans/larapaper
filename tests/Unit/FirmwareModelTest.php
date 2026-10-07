@@ -8,9 +8,11 @@ use App\Models\Firmware;
 test('firmware model labels and options are defined', function (): void {
     expect(FirmwareModel::Trmnl->label())->toBe('TRMNL (OG)')
         ->and(FirmwareModel::TrmnlX->label())->toBe('TRMNL X')
+        ->and(FirmwareModel::TrmnlBwry->label())->toBe('TRMNL OG (B/W/R/Y)')
         ->and(FirmwareModel::options())->toBe([
             'trmnl' => 'TRMNL (OG)',
             'trmnl_x' => 'TRMNL X',
+            'trmnl_bwry' => 'TRMNL OG (B/W/R/Y)',
         ]);
 });
 
@@ -27,12 +29,23 @@ test('firmware model is inferred from device touchbar capability', function (): 
         ->and(FirmwareModel::forDevice($xDevice))->toBe(FirmwareModel::TrmnlX);
 });
 
-test('x firmware url is derived from og url', function (): void {
+test('firmware model is inferred for og bwry devices', function (): void {
+    $bwryModel = DeviceModel::query()->where('name', 'og_bwry')->first()
+        ?? DeviceModel::factory()->create(['name' => 'og_bwry', 'kind' => 'trmnl']);
+
+    $bwryDevice = Device::factory()->create(['device_model_id' => $bwryModel->id]);
+
+    expect(FirmwareModel::forDevice($bwryDevice))->toBe(FirmwareModel::TrmnlBwry);
+});
+
+test('sibling firmware urls are derived from og url', function (): void {
     $ogUrl = 'https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_og/FW1.8.12.bin';
 
-    expect(FirmwareModel::xUrlFromOg($ogUrl))
+    expect(FirmwareModel::siblingUrlFromOg($ogUrl, '_x'))
         ->toBe('https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_x/FW1.8.12.bin')
-        ->and(FirmwareModel::xUrlFromOg('https://example.com/firmware.bin'))
+        ->and(FirmwareModel::siblingUrlFromOg($ogUrl, '_bwry'))
+        ->toBe('https://trmnl-fw.s3.us-east-2.amazonaws.com/trmnl_bwry/FW1.8.12.bin')
+        ->and(FirmwareModel::siblingUrlFromOg('https://example.com/firmware.bin', '_x'))
         ->toBeNull();
 });
 
