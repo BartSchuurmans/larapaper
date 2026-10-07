@@ -13,7 +13,7 @@ description: LaraPaper environment configuration reference.
 | `PASSKEYS_ENABLED` | Enable passkeys (requires HTTPS) | `0` |
 | `SSL_MODE` | SSL mode when not behind a reverse proxy ([docs](https://serversideup.net/open-source/docker-php/docs/customizing-the-image/configuring-ssl)) | `off` |
 | `FORCE_HTTPS` | Enforce HTTPS when the server terminates SSL | `0` |
-| `TRUSTED_PROXIES` | Trusted proxy CIDRs, e.g. `"172.0.0.0/8"` or `*` | `null` |
+| `TRUSTED_PROXIES` | Trusted proxy CIDRs, e.g. `"172.0.0.0/8"` or `*`; also needed to [serve under a sub-path](/getting-started/installation#serving-under-a-sub-path) | `null` |
 | `PHP_OPCACHE_ENABLE` | Enable PHP OPcache | `0` |
 | `TRMNL_IMAGE_URL_TIMEOUT` | Display endpoint response timeout (seconds) | `30` |
 | `HTTP_CLIENT_TIMEOUT` | Outbound HTTP timeout when fetching recipe polling URLs (seconds) | `10` |
