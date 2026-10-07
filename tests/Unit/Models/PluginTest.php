@@ -831,7 +831,7 @@ dataset('xss_vectors', [
     'attribute_event_handlers' => ['<a onmouseover="alert(1)">Link</a>', '<a>Link</a>', 'onmouseover'],
     'javascript_protocol' => ['<a href="javascript:alert(1)">Click</a>', '<a>Click</a>', 'javascript:'],
     'iframe_injection' => ['Watch <iframe src="https://x.com"></iframe>', 'Watch ', '<iframe>'],
-    'img_onerror_fallback' => ['Photo <img src=x onerror=alert(1)>', 'Photo <img src="x" alt="x">', 'onerror'],
+    'img_onerror_fallback' => ['Photo <img src=x onerror=alert(1)>', 'Photo <img src="x" alt="x" />', 'onerror'],
 ]);
 
 test('plugin model sanitizes template fields on save', function (string $input, string $expected, string $forbidden): void {
