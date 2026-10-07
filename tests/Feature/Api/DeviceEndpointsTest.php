@@ -591,6 +591,125 @@ test('authenticated user can fetch their devices', function (): void {
     ]);
 });
 
+test('authenticated user can fetch one of their devices', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create([
+        'user_id' => $user->id,
+        'last_firmware_version' => '1.6.0',
+        'default_refresh_interval' => 900,
+        'pause_until' => '2030-01-01 12:00:00',
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('api.devices.show', $device))
+        ->assertOk()
+        ->assertJson(['data' => [
+            'id' => $device->id,
+            'firmware_version' => '1.6.0',
+            'refresh_interval' => 900,
+            'sleep_until' => '2030-01-01T12:00:00Z',
+        ]]);
+});
+
+test('user cannot fetch a device they do not own', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create(['user_id' => User::factory()->create()->id]);
+
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('api.devices.show', $device))->assertNotFound();
+});
+
+test('authenticated user can update a device with TRMNL\'s settings', function (): void {
+    $user = User::factory()->create(['timezone' => 'Europe/Amsterdam']);
+    $device = Device::factory()->create(['user_id' => $user->id, 'sleep_mode_enabled' => false]);
+
+    Sanctum::actingAs($user);
+
+    $this->patchJson(route('api.devices.update', $device), [
+        'name' => 'Kitchen',
+        'refresh_interval' => 1800,
+        'sleep_mode_enabled' => true,
+        'sleep_start_time' => 1320,
+        'sleep_end_time' => 450,
+        'sleep_until' => '2030-01-01T17:00',
+    ])
+        ->assertOk()
+        ->assertJson(['data' => [
+            'name' => 'Kitchen',
+            'refresh_interval' => 1800,
+            'sleep_mode_enabled' => true,
+            'sleep_start_time' => 1320,
+            'sleep_end_time' => 450,
+            'sleep_until' => '2030-01-01T16:00:00Z',
+        ]]);
+
+    $device->refresh();
+    expect($device->name)->toBe('Kitchen')
+        ->and($device->default_refresh_interval)->toBe(1800)
+        ->and($device->sleep_mode_enabled)->toBeTrue()
+        ->and($device->sleep_mode_from->format('H:i'))->toBe('22:00')
+        ->and($device->sleep_mode_to->format('H:i'))->toBe('07:30')
+        ->and($device->pause_until->toIso8601ZuluString())->toBe('2030-01-01T16:00:00Z');
+});
+
+test('device update rejects a sleep time past the end of the day with 422', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create(['user_id' => $user->id, 'sleep_mode_from' => '22:00']);
+
+    Sanctum::actingAs($user);
+
+    $this->patchJson(route('api.devices.update', $device), ['sleep_start_time' => 1440])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['sleep_start_time' => 'The sleep start time field must be between 0 and 1439.']);
+
+    expect($device->refresh()->sleep_mode_from->format('H:i'))->toBe('22:00');
+});
+
+test('device show requires authentication with 401', function (): void {
+    $device = Device::factory()->create();
+
+    $this->getJson(route('api.devices.show', $device))->assertUnauthorized();
+});
+
+test('device update requires authentication with 401', function (): void {
+    $device = Device::factory()->create(['name' => 'Kitchen']);
+
+    $this->patchJson(route('api.devices.update', $device), ['name' => 'Mine'])->assertUnauthorized();
+
+    expect($device->refresh()->name)->toBe('Kitchen');
+});
+
+test('device update leaves out settings that were not sent', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create([
+        'user_id' => $user->id,
+        'name' => 'Kitchen',
+        'sleep_mode_from' => '22:00',
+        'pause_until' => now()->addDay(),
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $this->patchJson(route('api.devices.update', $device), ['sleep_until' => null])->assertOk();
+
+    $device->refresh();
+    expect($device->name)->toBe('Kitchen')
+        ->and($device->sleep_mode_from->format('H:i'))->toBe('22:00')
+        ->and($device->pause_until)->toBeNull();
+});
+
+test('user cannot update a device they do not own', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create(['user_id' => User::factory()->create()->id, 'name' => 'Kitchen']);
+
+    Sanctum::actingAs($user);
+
+    $this->patchJson(route('api.devices.update', $device), ['name' => 'Mine'])->assertNotFound();
+    expect($device->refresh()->name)->toBe('Kitchen');
+});
+
 test('plugin caches image until data is stale', function (): void {
     // Create source device with a playlist
     $device = Device::factory()->create([

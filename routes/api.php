@@ -37,6 +37,8 @@ Route::get('/current_screen', CurrentScreenController::class);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', UserController::class);
     Route::get('/devices', [DeviceController::class, 'index']);
+    Route::get('/devices/{device}', [DeviceController::class, 'show'])->name('api.devices.show');
+    Route::patch('/devices/{device}', [DeviceController::class, 'update'])->name('api.devices.update');
     Route::get('/device-models', [DeviceModelController::class, 'index']);
 
     Route::get('/display/status', [DisplayStatusController::class, 'show'])->name('display.status');
