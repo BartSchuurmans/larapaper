@@ -753,6 +753,48 @@ class Plugin extends Model
     }
 
     /**
+     * TRMNL template variables shared by Liquid, Blade, and view rendering.
+     *
+     * @return array<string, mixed>
+     */
+    private function trmnlContext(?Device $device = null): array
+    {
+        $timezone = $this->user->timezone ?? config('app.timezone');
+        $utcOffset = (string) Carbon::now($timezone)->getOffset();
+
+        return [
+            'system' => [
+                'timestamp_utc' => now()->utc()->timestamp,
+            ],
+            'user' => [
+                'utc_offset' => $utcOffset,
+                'name' => $this->user->name ?? 'Unknown User',
+                'locale' => 'en',
+                'time_zone_iana' => $timezone,
+            ],
+            'device' => [
+                'friendly_id' => $device?->friendly_id,
+                'percent_charged' => $device?->battery_percent,
+                'wifi_strength' => $device?->wifi_strength,
+                'height' => $device?->height,
+                'width' => $device?->width,
+            ],
+            'sensors' => $device ? $device->sensorContext() : ['latest' => [], 'all' => []],
+            'plugin_settings' => [
+                'instance_name' => $this->name,
+                'strategy' => $this->data_strategy,
+                'dark_mode' => $this->dark_mode ? 'yes' : 'no',
+                'no_screen_padding' => $this->no_bleed ? 'yes' : 'no',
+                'polling_headers' => $this->polling_header,
+                'polling_url' => $this->polling_url,
+                'custom_fields_values' => [
+                    ...(is_array($this->configuration) ? $this->configuration : []),
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Render the plugin's markup
      *
      * @throws LiquidException
@@ -769,48 +811,12 @@ class Plugin extends Model
             $renderedContent = '';
 
             if ($this->markup_language === 'liquid') {
-                // Get timezone from user or fall back to app timezone
-                $timezone = $this->user->timezone ?? config('app.timezone');
-
-                // Calculate UTC offset in seconds
-                $utcOffset = (string) Carbon::now($timezone)->getOffset();
-
-                // Build render context
                 $context = [
                     'size' => $size,
                     'data' => $this->data_payload,
                     'config' => $this->configuration ?? [],
                     ...(is_array($this->data_payload) ? $this->data_payload : []),
-                    'trmnl' => [
-                        'system' => [
-                            'timestamp_utc' => now()->utc()->timestamp,
-                        ],
-                        'user' => [
-                            'utc_offset' => $utcOffset,
-                            'name' => $this->user->name ?? 'Unknown User',
-                            'locale' => 'en',
-                            'time_zone_iana' => $timezone,
-                        ],
-                        'device' => [
-                            'friendly_id' => $device?->friendly_id,
-                            'percent_charged' => $device?->battery_percent,
-                            'wifi_strength' => $device?->wifi_strength,
-                            'height' => $device?->height,
-                            'width' => $device?->width,
-                        ],
-                        'sensors' => $device ? $device->sensorContext() : ['latest' => [], 'all' => []],
-                        'plugin_settings' => [
-                            'instance_name' => $this->name,
-                            'strategy' => $this->data_strategy,
-                            'dark_mode' => $this->dark_mode ? 'yes' : 'no',
-                            'no_screen_padding' => $this->no_bleed ? 'yes' : 'no',
-                            'polling_headers' => $this->polling_header,
-                            'polling_url' => $this->polling_url,
-                            'custom_fields_values' => [
-                                ...(is_array($this->configuration) ? $this->configuration : []),
-                            ],
-                        ],
-                    ],
+                    'trmnl' => $this->trmnlContext($device),
                 ];
 
                 // Check if external renderer should be used
@@ -847,46 +853,11 @@ class Plugin extends Model
                     $renderedContent = $template->render($liquidContext);
                 }
             } else {
-                // Get timezone from user or fall back to app timezone
-                $timezone = $this->user->timezone ?? config('app.timezone');
-
-                // Calculate UTC offset in seconds
-                $utcOffset = (string) Carbon::now($timezone)->getOffset();
-
                 $renderedContent = Blade::render($markup, [
                     'size' => $size,
                     'data' => $this->data_payload,
                     'config' => $this->configuration ?? [],
-                    'trmnl' => [
-                        'system' => [
-                            'timestamp_utc' => now()->utc()->timestamp,
-                        ],
-                        'user' => [
-                            'utc_offset' => $utcOffset,
-                            'name' => $this->user->name ?? 'Unknown User',
-                            'locale' => 'en',
-                            'time_zone_iana' => $timezone,
-                        ],
-                        'device' => [
-                            'friendly_id' => $device?->friendly_id,
-                            'percent_charged' => $device?->battery_percent,
-                            'wifi_strength' => $device?->wifi_strength,
-                            'height' => $device?->height,
-                            'width' => $device?->width,
-                        ],
-                        'sensors' => $device ? $device->sensorContext() : ['latest' => [], 'all' => []],
-                        'plugin_settings' => [
-                            'instance_name' => $this->name,
-                            'strategy' => $this->data_strategy,
-                            'dark_mode' => $this->dark_mode ? 'yes' : 'no',
-                            'no_screen_padding' => $this->no_bleed ? 'yes' : 'no',
-                            'polling_headers' => $this->polling_header,
-                            'polling_url' => $this->polling_url,
-                            'custom_fields_values' => [
-                                ...(is_array($this->configuration) ? $this->configuration : []),
-                            ],
-                        ],
-                    ],
+                    'trmnl' => $this->trmnlContext($device),
                 ]);
             }
 
@@ -926,6 +897,7 @@ class Plugin extends Model
                     'size' => $size,
                     'data' => $this->data_payload,
                     'config' => $this->configuration ?? [],
+                    'trmnl' => $this->trmnlContext($device),
                 ])->render();
 
                 if ($size === 'full') {
@@ -957,6 +929,7 @@ class Plugin extends Model
                 'size' => $size,
                 'data' => $this->data_payload,
                 'config' => $this->configuration ?? [],
+                'trmnl' => $this->trmnlContext($device),
             ])->render();
 
         }
