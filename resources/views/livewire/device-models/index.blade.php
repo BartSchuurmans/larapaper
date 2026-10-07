@@ -456,6 +456,18 @@ new class extends Component
                                 name="css_name"
                                 :disabled="(bool) $viewingDeviceModelId"
                             />
+                            @if (! $viewingDeviceModelId)
+                                <flux:callout variant="warning" icon="exclamation-circle" class="mt-3">
+                                    <flux:callout.text>
+                                        The TRMNL Framework uses the CSS Model Identifier to apply conditional CSS, which can override CSS variables defined below. Remove it if you need more control over the styling.
+                                        <flux:link
+                                            href="https://trmnl.com/framework/docs/3.4/screen#css-variables"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >Docs (CSS)</flux:link>
+                                    </flux:callout.text>
+                                </flux:callout>
+                            @endif
                         </div>
 
                         <div class="mb-4">
