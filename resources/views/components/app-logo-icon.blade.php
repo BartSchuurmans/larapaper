@@ -51,7 +51,7 @@
         </defs>
     </svg>
 @else
-    <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
         <defs>
             <clipPath id="canvas">
                 <rect width="1000" height="1000" rx="200" ry="200" />
