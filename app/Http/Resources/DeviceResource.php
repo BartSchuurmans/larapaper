@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
+ * A device in the shape of TRMNL's Account API (GET /api/devices/{id}).
+ *
  * @mixin \App\Models\Device
  */
 class DeviceResource extends JsonResource
@@ -32,6 +34,9 @@ class DeviceResource extends JsonResource
             'sleep_mode_enabled' => $this->sleep_mode_enabled,
             'sleep_start_time' => $this->minutesSinceMidnight($this->sleep_mode_from),
             'sleep_end_time' => $this->minutesSinceMidnight($this->sleep_mode_to),
+            'sleep_until' => $this->pause_until?->toIso8601ZuluString(),
+            'firmware_version' => $this->last_firmware_version,
+            'refresh_interval' => $this->default_refresh_interval,
         ];
     }
 
