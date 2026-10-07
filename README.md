@@ -33,6 +33,7 @@ It allows you to manage TRMNL-compatible devices, generate screens using **nativ
     * Raspberry Pi (HDMI output) [trmnl-display](https://github.com/usetrmnl/trmnl-display)
 * 🔄 TRMNL API Proxy – Can act as a proxy for the native cloud service (requires TRMNL Developer Edition).
     * This enables a hybrid setup – for example, you can update your custom Train Monitor every 5 minutes in the morning, while displaying native TRMNL plugins throughout the day.
+* 🏠 Home Assistant – Publishes each device (battery, Wi-Fi, firmware, screen, sleep mode, refresh interval) through MQTT discovery.
 * 🌙 Dark Mode – Switch between light and dark mode.
 * 🐳 Deployment – Dockerized setup for easier hosting (Dockerfile, docker-compose).
 * 💾 Flexible Database configuration – uses SQLite by default, also compatible with MySQL or PostgreSQL 

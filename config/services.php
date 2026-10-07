@@ -53,6 +53,16 @@ return [
         ],
     ],
 
+    // Publishes the devices to Home Assistant through MQTT discovery (mqtt:publish)
+    'mqtt' => [
+        'host' => env('MQTT_HOST'),
+        'port' => env('MQTT_PORT', 1883),
+        'username' => env('MQTT_USERNAME'),
+        'password' => env('MQTT_PASSWORD'),
+        'tls' => env('MQTT_TLS', false),
+        'discovery_prefix' => env('MQTT_DISCOVERY_PREFIX', 'homeassistant'),
+    ],
+
     'oidc' => [
         'enabled' => env('OIDC_ENABLED', false),
         // OIDC_ENDPOINT can be either:

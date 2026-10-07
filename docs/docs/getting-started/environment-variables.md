@@ -18,3 +18,8 @@ description: LaraPaper environment configuration reference.
 | `TRMNL_IMAGE_URL_TIMEOUT` | Display endpoint response timeout (seconds) | `30` |
 | `HTTP_CLIENT_TIMEOUT` | Outbound HTTP timeout when fetching recipe polling URLs (seconds) | `10` |
 | `APP_TIMEZONE` | PHP timezone (UTC recommended) | `UTC` |
+| `MQTT_HOST` | MQTT broker for [Home Assistant](/usage/home-assistant); unset turns it off | `null` |
+| `MQTT_PORT` | MQTT broker port | `1883` |
+| `MQTT_USERNAME` / `MQTT_PASSWORD` | MQTT broker login | `null` |
+| `MQTT_TLS` | Connect to the broker with TLS | `false` |
+| `MQTT_DISCOVERY_PREFIX` | Home Assistant's MQTT discovery prefix | `homeassistant` |

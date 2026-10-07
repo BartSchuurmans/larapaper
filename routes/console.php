@@ -16,3 +16,6 @@ Schedule::job(FirmwarePollJob::class)->daily();
 Schedule::job(CleanupDeviceLogsJob::class)->daily();
 Schedule::job(FetchDeviceModelsJob::class)->weekly();
 Schedule::job(NotifyDeviceBatteryLowJob::class)->dailyAt('10:00');
+
+Schedule::command('mqtt:publish')->everyTenSeconds()->withoutOverlapping()
+    ->when(fn (): bool => filled(config('services.mqtt.host')));
