@@ -37,7 +37,7 @@ test('it describes a device for Home Assistant', function (): void {
         'cns' => [['mac', 'aa:bb:cc:dd:ee:ff']],
         'name' => 'Kitchen',
         'sw' => '1.6.0',
-        'cu' => "https://larapaper.example/devices/{$device->id}/configure",
+        'cu' => route('devices.configure', $device),
     ])
         ->and($config['stat_t'])->toBe($service->baseTopic().'/aabbccddeeff/state')
         ->and($config['cmps']['battery'])->toMatchArray(['p' => 'sensor', 'device_class' => 'battery', 'unique_id' => "{$id}_battery"])
@@ -108,4 +108,13 @@ test('it ignores invalid controls and unknown devices', function (): void {
         ->and($service->applyCommand('aabbccddeeff', 'refresh_interval', 'soon'))->toBeFalse()
         ->and($service->applyCommand('aabbccddeeff', 'name', 'x'))->toBeFalse()
         ->and($service->applyCommand('001122334455', 'sleep_mode', 'ON'))->toBeFalse();
+});
+
+test('it links no device page while APP_URL is a local default', function (): void {
+    config(['app.url' => 'http://localhost']);
+    Device::factory()->create(['mac_address' => 'aa:bb:cc:dd:ee:ff']);
+
+    $config = collect(app(HomeAssistantMqttService::class)->devices())->first()['config'];
+
+    expect($config['dev'])->not->toHaveKey('cu');
 });
