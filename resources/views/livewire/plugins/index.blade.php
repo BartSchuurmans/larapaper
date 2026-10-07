@@ -473,29 +473,49 @@ new class extends Component
             $allPlugins = $this->plugins;
         @endphp
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
             @foreach ($allPlugins as $index => $plugin)
                 <div
                     wire:key="plugin-{{ $plugin['id'] ?? $plugin['name'] ?? $index }}"
                     x-data="{ pluginName: {{ json_encode(strtolower($plugin['name'] ?? '')) }} }"
                     x-show="searchTerm.length <= 1 || pluginName.includes(searchTerm.toLowerCase())"
-                    class="styled-container"
+                    class="h-full"
                 >
                     <a
                         href="{{ $plugin['detail_view_url'] ?? route('plugins.recipe', ['plugin' => $plugin['id']]) }}"
-                        class="block h-full"
+                        class="group block h-full"
+                        aria-label="{{ $plugin['name'] }}"
                     >
-                        <div class="flex h-full items-center space-x-4 px-10 py-8">
-                            @isset($plugin['icon_url'])
-                                <img src="{{ $plugin['icon_url'] }}" class="h-6" />
-                            @else
-                                <flux:icon
-                                    name="{{ $plugin['flux_icon_name'] ?? 'puzzle-piece' }}"
-                                    class="text-accent text-4xl"
-                                />
-                            @endif
-                            <h3 class="text-lg font-medium dark:text-zinc-200">{{ $plugin['name'] }}</h3>
-                        </div>
+                        <flux:card
+                            size="sm"
+                            class="h-full transition-colors group-hover:bg-zinc-50 dark:group-hover:bg-zinc-800/60"
+                        >
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="flex size-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800/80"
+                                    aria-hidden="true"
+                                >
+                                    @isset($plugin['icon_url'])
+                                        <img
+                                            src="{{ $plugin['icon_url'] }}"
+                                            alt=""
+                                            width="24"
+                                            height="24"
+                                            class="size-6 object-contain"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    @else
+                                        <flux:icon
+                                            name="{{ $plugin['flux_icon_name'] ?? 'puzzle-piece' }}"
+                                            class="text-accent size-6"
+                                        />
+                                    @endif
+                                </div>
+
+                                <flux:heading class="min-w-0 flex-1 truncate">{{ $plugin['name'] }}</flux:heading>
+                            </div>
+                        </flux:card>
                     </a>
                 </div>
             @endforeach
