@@ -1,41 +1,61 @@
 <?php
 
 use App\Jobs\GenerateScreenJob;
+use App\Models\Device;
+use App\Models\Plugin;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
+use Keepsuit\Liquid\Exceptions\LiquidException;
 use Livewire\Component;
 
 new class extends Component
 {
-    public string $blade_code = '';
+    public string $markup_code = '';
+
+    public string $markup_language = 'blade';
 
     public bool $isLoading = false;
 
     public Collection $devices;
 
-    public array $checked_devices;
+    public array $checked_devices = [];
 
-    public function mount()
+    public function mount(): void
     {
         $this->devices = auth()->user()->devices->pluck('id', 'name');
     }
 
-    public function submit()
+    public function submit(): void
     {
         $this->isLoading = true;
 
         $this->validate([
             'checked_devices' => 'required|array',
-            'blade_code' => 'required|string',
+            'markup_code' => 'required|string',
+            'markup_language' => 'required|string|in:blade,liquid',
         ]);
 
-        // only devices that are owned by the user
-        $this->checked_devices = array_intersect($this->checked_devices, auth()->user()->devices->pluck('id')->toArray());
+        $this->checked_devices = array_intersect(
+            $this->checked_devices,
+            auth()->user()->devices->pluck('id')->toArray()
+        );
 
         try {
-            $rendered = Blade::render($this->blade_code);
-            foreach ($this->checked_devices as $device) {
-                GenerateScreenJob::dispatchSync($device, null, $rendered);
+            foreach ($this->checked_devices as $deviceId) {
+                $device = Device::query()->with(['deviceModel', 'deviceModel.palette'])->find($deviceId);
+
+                if ($device === null) {
+                    continue;
+                }
+
+                $rendered = $this->markup_language === 'liquid'
+                    ? $this->renderLiquidMarkup($device)
+                    : Blade::render($this->markup_code);
+
+                GenerateScreenJob::dispatchSync($deviceId, null, $rendered);
             }
+        } catch (LiquidException $e) {
+            $this->addError('generate_screen', $e->toLiquidErrorMessage());
         } catch (Exception $e) {
             $this->addError('generate_screen', $e->getMessage());
         }
@@ -43,7 +63,19 @@ new class extends Component
         $this->isLoading = false;
     }
 
-    public function renderExample(string $example)
+    private function renderLiquidMarkup(Device $device): string
+    {
+        $plugin = new Plugin([
+            'plugin_type' => 'recipe',
+            'markup_language' => 'liquid',
+            'render_markup' => $this->markup_code,
+        ]);
+        $plugin->setRelation('user', auth()->user());
+
+        return $plugin->render('full', true, $device);
+    }
+
+    public function renderExample(string $example): void
     {
         switch ($example) {
             case 'helloWorld':
@@ -62,11 +94,28 @@ new class extends Component
                 $markup = '<h1>Hello World!</h1>';
                 break;
         }
-        $this->blade_code = $markup;
+        $this->markup_code = $markup;
     }
 
     public function renderHelloWorld(): string
     {
+        if ($this->markup_language === 'liquid') {
+            return <<<'HTML'
+<div class="view view--{{ size }}">
+    <div class="layout">
+        <div class="richtext richtext--center gap--large">
+            <span class="title">LaraPaper</span>
+            <div class="content">“This screen was rendered by BYOS LaraPaper”</div>
+            <span class="label label--underline">Benjamin Nussbaum</span>
+        </div>
+    </div>
+    <div class="title_bar">
+        <span class="title">LaraPaper</span>
+    </div>
+</div>
+HTML;
+        }
+
         return <<<'HTML'
 <x-trmnl::screen>
     <x-trmnl::view>
@@ -85,6 +134,23 @@ HTML;
 
     public function renderQuote(): string
     {
+        if ($this->markup_language === 'liquid') {
+            return <<<'HTML'
+<div class="view view--{{ size }}">
+    <div class="layout">
+        <div class="richtext richtext--center gap--large">
+            <span class="title">Motivational Quote</span>
+            <div class="content">“I love inside jokes. I hope to be a part of one someday.”</div>
+            <span class="label label--underline">Michael Scott</span>
+        </div>
+    </div>
+    <div class="title_bar">
+        <span class="title">Motivational Quote</span>
+    </div>
+</div>
+HTML;
+        }
+
         return <<<'HTML'
 <x-trmnl::screen>
     <x-trmnl::view>
@@ -101,8 +167,40 @@ HTML;
 HTML;
     }
 
-    public function renderTrainMonitor()
+    public function renderTrainMonitor(): string
     {
+        if ($this->markup_language === 'liquid') {
+            return <<<'HTML'
+<div class="view view--{{ size }}">
+    <div class="layout">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th><span class="title">Abfahrt</span></th>
+                    <th><span class="title">Aktuell</span></th>
+                    <th><span class="title">Zug</span></th>
+                    <th><span class="title">Ziel</span></th>
+                    <th><span class="title">Steig</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="label">08:51</span></td>
+                    <td><span class="label">08:52</span></td>
+                    <td><span class="label">REX 1</span></td>
+                    <td><span class="label">Vienna Main Station</span></td>
+                    <td><span class="label">3</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="title_bar">
+        <span class="title">Train Monitor</span>
+    </div>
+</div>
+HTML;
+        }
+
         return <<<'HTML'
 <x-trmnl::screen>
     <x-trmnl::view>
@@ -132,11 +230,34 @@ HTML;
     </x-trmnl::view>
 </x-trmnl::screen>
 HTML;
-
     }
 
-    public function renderHomeAssistant()
+    public function renderHomeAssistant(): string
     {
+        if ($this->markup_language === 'liquid') {
+            return <<<'HTML'
+<div class="view view--{{ size }}">
+    <div class="layout layout--col gap--space-between">
+        <div class="grid grid--cols-4">
+            <div class="col col--center">
+                <div class="item">
+                    <div class="meta"></div>
+                    <div class="content">
+                        <span class="value value--large">23.3°</span>
+                        <span class="label w--full flex">47.52 %</span>
+                        <span class="label w--full flex">Sensor 1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="title_bar">
+        <span class="title">Home Assistant</span>
+    </div>
+</div>
+HTML;
+        }
+
         return <<<'HTML'
 <x-trmnl::screen>
     <x-trmnl::view>
@@ -161,7 +282,6 @@ HTML;
     </x-trmnl::view>
 </x-trmnl::screen>
 HTML;
-
     }
 };
 ?>
@@ -173,27 +293,32 @@ HTML;
             <flux:badge size="sm" class="ml-2">Plugin</flux:badge>
         </h2>
 
-        {{--        <div class="flex justify-between items-center mb-6">--}}
-
         <div class="mt-5 mb-5">
+            <div class="mb-4 flex items-center gap-4">
+                <span>Template language</span>
+                <flux:radio.group wire:model.live="markup_language" variant="segmented">
+                    <flux:radio value="blade" label="Blade" />
+                    <flux:radio value="liquid" label="Liquid" />
+                </flux:radio.group>
+            </div>
             <span>Examples</span>
             <div class="text-accent">
-                <a href="#" wire:click="renderExample('helloWorld')" class="text-xl">Hello World</a> |
-                <a href="#" wire:click="renderExample('quote')" class="text-xl">Quote</a> |
-                <a href="#" wire:click="renderExample('trainMonitor')" class="text-xl">Train Monitor</a> |
-                <a href="#" wire:click="renderExample('homeAssistant')" class="text-xl">Temperature Sensors</a>
+                <a href="#" wire:click.prevent="renderExample('helloWorld')" class="text-xl">Hello World</a> |
+                <a href="#" wire:click.prevent="renderExample('quote')" class="text-xl">Quote</a> |
+                <a href="#" wire:click.prevent="renderExample('trainMonitor')" class="text-xl">Train Monitor</a> |
+                <a href="#" wire:click.prevent="renderExample('homeAssistant')" class="text-xl">Temperature Sensors</a>
             </div>
         </div>
         <form wire:submit="submit">
             <div class="mb-4">
                 <flux:textarea
-                    label="Blade Code"
+                    :label="$markup_language === 'liquid' ? 'Liquid Markup' : 'Blade Code'"
                     class="font-mono"
-                    wire:model="blade_code"
-                    id="blade_code"
-                    name="blade_code"
+                    wire:model="markup_code"
+                    id="markup_code"
+                    name="markup_code"
                     rows="15"
-                    placeholder="Enter your blade code here..."
+                    :placeholder="$markup_language === 'liquid' ? 'Enter your liquid markup here...' : 'Enter your blade code here...'"
                 />
             </div>
 
@@ -215,7 +340,5 @@ HTML;
                 <span class="font-mono text-red-700">{{ $message }}</span>
             </div>
         @enderror
-
-        {{--        </div>--}}
     </div>
 </div>
