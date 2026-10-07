@@ -70,13 +70,28 @@ class Plugin extends Model
         });
 
         static::updating(function ($model): void {
-            // Reset image cache when any markup changes
+            // Reset image cache when any markup or render-affecting settings change
             if ($model->isDirty([
                 'render_markup',
                 'render_markup_half_horizontal',
                 'render_markup_half_vertical',
                 'render_markup_quadrant',
                 'render_markup_shared',
+                'render_markup_view',
+                'markup_language',
+                'no_bleed',
+                'dark_mode',
+                'configuration',
+                'configuration_template',
+                'data_strategy',
+                'polling_url',
+                'polling_verb',
+                'polling_header',
+                'polling_body',
+                'data_payload',
+                'preferred_renderer',
+                'framework_version',
+                'transform_language',
             ])) {
                 $model->current_image = null;
                 $model->current_image_metadata = null;

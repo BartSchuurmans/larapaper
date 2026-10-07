@@ -1131,3 +1131,72 @@ test('deleting plugin cascades mashup playlist items containing plugin id', func
 
     expect(PlaylistItem::query()->find($mashupItem->id))->toBeNull();
 });
+
+test('updating render-affecting attributes invalidates cached image and metadata', function (string $attribute, mixed $initialValue, mixed $newValue): void {
+    $plugin = Plugin::factory()->create([
+        $attribute => $initialValue,
+        'current_image' => 'cached-uuid-1234',
+        'current_image_metadata' => ['width' => 800, 'height' => 480],
+    ]);
+
+    $plugin->update([$attribute => $newValue]);
+
+    $plugin->refresh();
+    expect($plugin->current_image)->toBeNull()
+        ->and($plugin->current_image_metadata)->toBeNull();
+})->with([
+    ['render_markup', '<div>initial markup</div>', '<div>updated markup</div>'],
+    ['render_markup_half_horizontal', null, '<div>updated half horizontal</div>'],
+    ['render_markup_half_vertical', null, '<div>updated half vertical</div>'],
+    ['render_markup_quadrant', null, '<div>updated quadrant</div>'],
+    ['render_markup_shared', null, '<div>updated shared</div>'],
+    ['render_markup_view', null, 'recipes.test-view'],
+    ['markup_language', null, 'liquid'],
+    ['no_bleed', false, true],
+    ['dark_mode', false, true],
+    ['configuration', ['api_key' => 'old_secret'], ['api_key' => 'secret123']],
+    ['configuration_template', null, ['custom_fields' => [['name' => 'API Key', 'field_type' => 'string']]]],
+    ['data_strategy', 'static', 'polling'],
+    ['polling_url', 'https://api.example.com/initial', 'https://api.example.com/data'],
+    ['polling_verb', 'get', 'post'],
+    ['polling_header', null, 'Authorization: Bearer test'],
+    ['polling_body', null, '{"test": 123}'],
+    ['data_payload', ['count' => 1], ['count' => 42]],
+    ['preferred_renderer', null, 'liquid'],
+    ['framework_version', null, '3.1.0'],
+    ['transform_language', null, 'jq'],
+]);
+
+test('updating non-render attributes does not invalidate cached image', function (string $attribute, mixed $newValue): void {
+    $plugin = Plugin::factory()->create([
+        'current_image' => 'cached-uuid-1234',
+        'current_image_metadata' => ['width' => 800, 'height' => 480],
+        'name' => 'Initial Name',
+        'trmnlp_id' => 'initial-id',
+    ]);
+
+    $plugin->update([$attribute => $newValue]);
+
+    $plugin->refresh();
+    expect($plugin->current_image)->toBe('cached-uuid-1234')
+        ->and($plugin->current_image_metadata)->toBe(['width' => 800, 'height' => 480]);
+})->with([
+    ['name', 'New Name'],
+    ['trmnlp_id', 'new-id'],
+]);
+
+test('updating current_image does not clear newly set current_image', function (): void {
+    $plugin = Plugin::factory()->create([
+        'current_image' => null,
+        'current_image_metadata' => null,
+    ]);
+
+    $plugin->update([
+        'current_image' => 'new-image-uuid',
+        'current_image_metadata' => ['width' => 800, 'height' => 480],
+    ]);
+
+    $plugin->refresh();
+    expect($plugin->current_image)->toBe('new-image-uuid')
+        ->and($plugin->current_image_metadata)->toBe(['width' => 800, 'height' => 480]);
+});

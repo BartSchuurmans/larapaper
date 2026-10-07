@@ -295,3 +295,25 @@ test('recipe settings rejects framework_version 4.0.0 and above', function (): v
 
     expect($plugin->fresh()->framework_version)->toBeNull();
 });
+
+test('recipe settings clears cached current_image and current_image_metadata when settings updated', function (): void {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $plugin = Plugin::factory()->create([
+        'user_id' => $user->id,
+        'framework_version' => null,
+        'current_image' => 'cached-uuid-1234',
+        'current_image_metadata' => ['width' => 800, 'height' => 480],
+    ]);
+
+    Livewire::test('plugins.recipes.settings', ['plugin' => $plugin])
+        ->set('framework_version', '3.0.0')
+        ->call('saveTrmnlpId')
+        ->assertHasNoErrors();
+
+    $freshPlugin = $plugin->fresh();
+    expect($freshPlugin->framework_version)->toBe('3.0.0')
+        ->and($freshPlugin->current_image)->toBeNull()
+        ->and($freshPlugin->current_image_metadata)->toBeNull();
+});
