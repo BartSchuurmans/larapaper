@@ -822,6 +822,40 @@ test('plugin liquid render keeps UTC epoch math after iCal polling mutates PHP d
     Carbon::setTestNow();
 });
 
+test('holidays ical recipe view uses time_zone_iana from trmnl.user context', function (): void {
+    Carbon::setTestNow(Carbon::parse('2026-12-24 10:00:00', 'UTC'));
+
+    $user = User::factory()->create([
+        'timezone' => 'America/New_York',
+    ]);
+
+    $plugin = Plugin::factory()->create([
+        'user_id' => $user->id,
+        'markup_language' => 'blade',
+        'render_markup_view' => 'recipes.holidays-ical',
+        'data_strategy' => 'static',
+        'data_payload' => [
+            'ical' => [
+                [
+                    'SUMMARY' => 'Christmas Day',
+                    'LOCATION' => 'New York',
+                    'DTSTART' => '2026-12-25T00:00:00Z',
+                    'DTEND' => '2026-12-25T23:59:59Z',
+                ],
+            ],
+        ],
+    ]);
+
+    $rendered = $plugin->render('full', false);
+
+    expect($rendered)
+        ->toContain('Christmas Day')
+        ->toContain('Thu, Dec 24')
+        ->toContain('New York');
+
+    Carbon::setTestNow();
+});
+
 /**
  * Plugin security: XSS Payload Dataset
  * [Input, Expected Result, Forbidden String]

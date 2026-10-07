@@ -2,13 +2,14 @@
 @php
     use Carbon\Carbon;
 
-    $today = Carbon::today(config('app.timezone'));
+    $timezone = $trmnl['user']['time_zone_iana'];
+    $today = Carbon::today($timezone);
 
     $events = collect($data['ical'] ?? [])
-        ->map(function (array $event): array {
+        ->map(function (array $event) use ($timezone): array {
             try {
                 $start = isset($event['DTSTART'])
-                    ? Carbon::parse($event['DTSTART'])->setTimezone(config('app.timezone'))
+                    ? Carbon::parse($event['DTSTART'])->setTimezone($timezone)
                     : null;
             } catch (Exception $e) {
                 $start = null;
@@ -16,7 +17,7 @@
 
             try {
                 $end = isset($event['DTEND'])
-                    ? Carbon::parse($event['DTEND'])->setTimezone(config('app.timezone'))
+                    ? Carbon::parse($event['DTEND'])->setTimezone($timezone)
                     : null;
             } catch (Exception $e) {
                 $end = null;
@@ -66,10 +67,10 @@
                             <x-trmnl::label>{{ $event['start']?->format('D, M j') }}</x-trmnl::label>
                         </td>
                         <td>
-                            <x-trmnl::label variant="primary">{{ $event['summary'] }}</x-trmnl::label>
+                            <x-trmnl::label variant="inverted">{{ $event['summary'] }}</x-trmnl::label>
                         </td>
                         <td>
-                            <x-trmnl::label variant="inverted">{{ Str::limit($event['location'] ?? '—',100) }}</x-trmnl::label>
+                            <x-trmnl::label>{{ Str::limit($event['location'] ?? '—',50) }}</x-trmnl::label>
                         </td>
                     </tr>
                 @empty
