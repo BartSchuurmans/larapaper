@@ -144,6 +144,10 @@ export default defineConfig({
   ],
 
   plugins: {
+    ai: {
+      assistant: true,
+      projectId: 'docmd_kke9pivcmuzj4ww4'
+    },
     seo: {
       defaultDescription:
         'LaraPaper is a self-hostable Bring Your Own Server (BYOS) implementation for TRMNL e-paper devices, built with Laravel.',
