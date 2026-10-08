@@ -1,8 +1,12 @@
 <?php
 
+use App\Enums\DeviceSensorKind;
+use App\Enums\FirmwareModel;
 use App\Jobs\GenerateScreenJob;
 use App\Models\Device;
 use App\Models\DeviceModel;
+use App\Models\DeviceSensor;
+use App\Models\Firmware;
 use App\Models\Playlist;
 use App\Models\PlaylistItem;
 use App\Models\Plugin;
@@ -598,7 +602,13 @@ test('authenticated user can fetch one of their devices', function (): void {
         'last_firmware_version' => '1.6.0',
         'default_refresh_interval' => 900,
         'pause_until' => '2030-01-01 12:00:00',
+        'last_battery_charging' => true,
+        'last_usb_connected' => false,
+        'current_screen_image' => 'test-image',
     ]);
+    Firmware::factory()->create(['model' => FirmwareModel::Trmnl, 'version_tag' => '1.7.0', 'latest' => true]);
+    DeviceSensor::factory()->create(['device_id' => $device->id, 'kind' => DeviceSensorKind::TEMPERATURE, 'value' => 21.5]);
+    Storage::disk('public')->put('images/generated/test-image.png', 'image');
 
     Sanctum::actingAs($user);
 
@@ -609,7 +619,27 @@ test('authenticated user can fetch one of their devices', function (): void {
             'firmware_version' => '1.6.0',
             'refresh_interval' => 900,
             'sleep_until' => '2030-01-01T12:00:00Z',
+            'battery_charging' => true,
+            'usb_connected' => false,
+            'latest_firmware_version' => '1.7.0',
+            'update_firmware' => false,
+            'current_screen_image_url' => Storage::disk('public')->url('images/generated/test-image.png'),
+            'sensors' => ['temperature' => ['value' => 21.5]],
         ]]);
+});
+
+test('device list leaves out the firmware, screen and sensor details', function (): void {
+    $user = User::factory()->create();
+    Device::factory()->create(['user_id' => $user->id, 'last_battery_charging' => true]);
+
+    Sanctum::actingAs($user);
+
+    $this->getJson('/api/devices')
+        ->assertOk()
+        ->assertJsonPath('data.0.battery_charging', true)
+        ->assertJsonMissingPath('data.0.latest_firmware_version')
+        ->assertJsonMissingPath('data.0.current_screen_image_url')
+        ->assertJsonMissingPath('data.0.sensors');
 });
 
 test('user cannot fetch a device they do not own', function (): void {
@@ -698,6 +728,34 @@ test('device update leaves out settings that were not sent', function (): void {
     expect($device->name)->toBe('Kitchen')
         ->and($device->sleep_mode_from->format('H:i'))->toBe('22:00')
         ->and($device->pause_until)->toBeNull();
+});
+
+test('device update schedules and cancels the latest firmware for the device', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create(['user_id' => $user->id]);
+    Firmware::factory()->create(['model' => FirmwareModel::TrmnlX, 'latest' => true]);
+    $firmware = Firmware::factory()->create(['model' => FirmwareModel::Trmnl, 'latest' => true]);
+
+    Sanctum::actingAs($user);
+
+    $this->patchJson(route('api.devices.update', $device), ['update_firmware' => true])
+        ->assertOk()
+        ->assertJson(['data' => ['update_firmware' => true]]);
+    expect($device->refresh()->update_firmware_id)->toBe($firmware->id);
+
+    $this->patchJson(route('api.devices.update', $device), ['update_firmware' => false])->assertOk();
+    expect($device->refresh()->update_firmware_id)->toBeNull();
+});
+
+test('device update rejects a firmware update when no firmware is known', function (): void {
+    $user = User::factory()->create();
+    $device = Device::factory()->create(['user_id' => $user->id]);
+
+    Sanctum::actingAs($user);
+
+    $this->patchJson(route('api.devices.update', $device), ['update_firmware' => true])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['update_firmware']);
 });
 
 test('user cannot update a device they do not own', function (): void {

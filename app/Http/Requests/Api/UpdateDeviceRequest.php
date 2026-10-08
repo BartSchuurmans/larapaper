@@ -6,7 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
 
 /**
- * The device settings of TRMNL's Account API (PATCH /api/devices/{id}) that LaraPaper has.
+ * The device settings of TRMNL's Account API (PATCH /api/devices/{id}) that LaraPaper
+ * has, plus update_firmware, which TRMNL leaves to over-the-air updates.
  */
 class UpdateDeviceRequest extends FormRequest
 {
@@ -27,6 +28,7 @@ class UpdateDeviceRequest extends FormRequest
             'sleep_start_time' => 'integer|between:0,1439',
             'sleep_end_time' => 'integer|between:0,1439',
             'sleep_until' => 'nullable|date',
+            'update_firmware' => 'boolean',
         ];
     }
 
