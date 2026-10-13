@@ -5,24 +5,27 @@ use OffloadProject\Toggle\Facades\Toggle;
 
 new class extends Component
 {
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->id === 1, 403);
+    }
+
     /**
-     * @return array{toggles: Illuminate\Support\Collection<int, array{name: string, title: string, description: string|null, active: bool}>|null}
+     * @return array{toggles: Illuminate\Support\Collection<int, array{name: string, title: string, description: string|null, active: bool}>}
      */
     public function with(): array
     {
         return [
-            'toggles' => auth()->user()->id === 1
-                ? collect(Toggle::all())->map(function (bool $active, string $name): array {
-                    $experiment = config("toggle.experiments.{$name}", []);
+            'toggles' => collect(Toggle::all())->map(function (bool $active, string $name): array {
+                $experiment = config("toggle.experiments.{$name}", []);
 
-                    return [
-                        'name' => $name,
-                        'title' => $experiment['title'] ?? $name,
-                        'description' => $experiment['description'] ?? null,
-                        'active' => $active,
-                    ];
-                })->values()
-                : null,
+                return [
+                    'name' => $name,
+                    'title' => $experiment['title'] ?? $name,
+                    'description' => $experiment['description'] ?? null,
+                    'active' => $active,
+                ];
+            })->values(),
         ];
     }
 

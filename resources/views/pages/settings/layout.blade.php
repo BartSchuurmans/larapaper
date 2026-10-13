@@ -16,9 +16,11 @@
                     {{ __('Updates') }}</flux:navlist.item>
             @endif
 
-            <flux:navlist.group :heading="__('Experimental')" class="mt-2">
-                <flux:navlist.item :href="route('settings.lab')" wire:navigate>{{ __('Lab') }}</flux:navlist.item>
-            </flux:navlist.group>
+            @if (auth()->user()->id === 1)
+                <flux:navlist.group :heading="__('Experimental')" class="mt-2">
+                    <flux:navlist.item :href="route('settings.lab')" wire:navigate>{{ __('Lab') }}</flux:navlist.item>
+                </flux:navlist.group>
+            @endif
 
             <flux:navlist.group :heading="__('Support')" class="mt-2">
                 <flux:navlist.item :href="route('settings.support')" wire:navigate>

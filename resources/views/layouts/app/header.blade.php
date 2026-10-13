@@ -84,7 +84,10 @@
                         Settings</flux:menu.item>
                     <flux:menu.item href="{{ route('settings.api-tokens') }}" wire:navigate icon="key">
                         API Tokens</flux:menu.item>
-                    <flux:menu.item href="{{ route('settings.lab') }}" wire:navigate icon="beaker">Lab</flux:menu.item>
+                    @if (auth()->user()->id === 1)
+                        <flux:menu.item href="{{ route('settings.lab') }}" wire:navigate icon="beaker">
+                            Lab</flux:menu.item>
+                    @endif
                     @if (config('app.version'))
                         <flux:menu.item href="{{ route('settings.update') }}" wire:navigate icon="arrow-down-circle">
                             <div class="flex items-center gap-2">

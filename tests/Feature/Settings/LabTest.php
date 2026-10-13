@@ -45,3 +45,33 @@ test('lab settings page shows mcp title and description from config', function (
         ->assertSee('MCP')
         ->assertSee('Expose a Model Context Protocol server so AI tools can list, create, update, and render your recipes. Requires an MCP API token.');
 });
+
+test('first user sees lab in the profile menu and settings nav', function (): void {
+    $response = $this->get(route('settings.preferences'));
+
+    expect(mb_substr_count($response->getContent(), route('settings.lab')))->toBe(2);
+});
+
+test('non-first users do not see lab in the profile menu or settings nav', function (): void {
+    $secondUser = User::factory()->create();
+
+    $this->actingAs($secondUser)
+        ->get(route('settings.preferences'))
+        ->assertDontSee(route('settings.lab'), false);
+});
+
+test('non-first users cannot open the lab settings page', function (): void {
+    $secondUser = User::factory()->create();
+
+    $this->actingAs($secondUser)
+        ->get(route('settings.lab'))
+        ->assertForbidden();
+});
+
+test('non-first users cannot load the lab component', function (): void {
+    $secondUser = User::factory()->create();
+
+    Livewire::actingAs($secondUser)
+        ->test('pages::settings.lab')
+        ->assertForbidden();
+});
