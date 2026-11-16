@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\ImageFormat;
+use App\Enums\ScaleLevel;
+use App\Enums\TextScaleLevel;
 use App\Models\Device;
 use App\Models\DeviceModel;
 use App\Services\ImageGenerationService;
@@ -396,6 +398,16 @@ it('imageMetadataMatches returns false when metadata differs', function (): void
     expect(ImageGenerationService::imageMetadataMatches($stored, $device))->toBeFalse();
 });
 
+it('imageMetadataMatches returns false when the device scale level changes', function (): void {
+    $deviceModel = DeviceModel::factory()->create(['width' => 1872, 'height' => 1404]);
+    $device = Device::factory()->create(['device_model_id' => $deviceModel->id, 'scale_level' => null]);
+    $stored = ImageGenerationService::buildImageMetadataFromDevice($device);
+
+    $device->update(['scale_level' => ScaleLevel::REGULAR]);
+
+    expect(ImageGenerationService::imageMetadataMatches($stored, $device->refresh()))->toBeFalse();
+});
+
 it('resetIfNotCacheable clears recipe cache when metadata does not match', function (): void {
     $plugin = App\Models\Plugin::factory()->create([
         'plugin_type' => 'recipe',
@@ -595,4 +607,13 @@ it('stores a new uuid when the existing image file is missing on disk', function
     expect($uuid)->not->toBe('missing-on-disk-uuid')
         ->and($device->current_screen_image)->toBe($uuid);
     Storage::disk('public')->assertExists("/images/generated/{$uuid}.png");
+});
+
+it('imageMetadataMatches returns false when the playlist item text scale changes', function (): void {
+    $deviceModel = DeviceModel::factory()->create(['width' => 1872, 'height' => 1404]);
+    $device = Device::factory()->create(['device_model_id' => $deviceModel->id]);
+    $stored = ImageGenerationService::buildImageMetadataFromDevice($device);
+
+    expect(ImageGenerationService::imageMetadataMatches($stored, $device, TextScaleLevel::LARGE))->toBeFalse()
+        ->and(ImageGenerationService::imageMetadataMatches($stored, $device))->toBeTrue();
 });
